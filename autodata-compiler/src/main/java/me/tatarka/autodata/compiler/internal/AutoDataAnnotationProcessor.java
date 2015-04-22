@@ -2,51 +2,30 @@ package me.tatarka.autodata.compiler.internal;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.google.common.io.Closeables;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-
-import java.beans.Introspector;
-import java.io.IOException;
-import java.io.Writer;
-import java.lang.annotation.Annotation;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.Set;
-
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Filer;
-import javax.annotation.processing.Messager;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
-import javax.lang.model.SourceVersion;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
-
 import me.tatarka.autodata.base.AutoData;
 import me.tatarka.autodata.compiler.AutoDataProcessor;
 import me.tatarka.autodata.compiler.model.AutoDataClass;
 import me.tatarka.autodata.compiler.model.AutoDataField;
 import me.tatarka.autodata.compiler.model.AutoDataGetterMethod;
 import me.tatarka.autodata.plugins.AutoEquals;
+
+import javax.annotation.processing.*;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.*;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
+import java.beans.Introspector;
+import java.io.IOException;
+import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.util.*;
 
 /**
  * Created by evan on 4/20/15.
@@ -172,7 +151,7 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
             AutoDataField field = new AutoDataField(fieldName, methodReturnType, false);
             AutoDataGetterMethod previousMethod;
             if ((previousMethod = fields.get(field)) != null) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "More than one AutoData field called " + fieldName + " (" + methodName + " and " + previousMethod.getName() + ").", methodElement);
+                messager.printMessage(Diagnostic.Kind.ERROR, "More than one AutoData field called " + fieldName + " in class " + classElement.getQualifiedName() + " (" + methodName + " and " + previousMethod.getName() + ").", methodElement);
                 wasError = true;
             }
 

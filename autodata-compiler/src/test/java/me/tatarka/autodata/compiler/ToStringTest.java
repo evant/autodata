@@ -1,12 +1,10 @@
 package me.tatarka.autodata.compiler;
 
 import com.google.testing.compile.JavaFileObjects;
-
+import me.tatarka.autodata.compiler.internal.AutoDataAnnotationProcessor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import me.tatarka.autodata.compiler.internal.AutoDataAnnotationProcessor;
 
 import static com.google.common.truth.Truth.ASSERT;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
@@ -19,24 +17,10 @@ public class ToStringTest {
     @Test
     public void emptyClass() {
         ASSERT.about(javaSource())
-                .that(JavaFileObjects.forSourceString("test.Test", "package test;\n" +
-                        "\n" +
-                        "import me.tatarka.autodata.base.AutoData;\n" +
-                        "import me.tatarka.autodata.plugins.AutoToString;\n" +
-                        "\n" +
-                        "@AutoData(defaults = false)\n" +
-                        "@AutoToString\n" +
-                        "public abstract class Test {}"))
+                .that(JavaFileObjects.forResource("tostring/inputs/Empty.java"))
                 .processedWith(new AutoDataAnnotationProcessor())
                 .compilesWithoutError()
                 .and()
-                .generatesSources(JavaFileObjects.forSourceString("test.AutoData_Test", "package test;\n" +
-                        "\n" +
-                        "final class AutoData_Test extends Test {\n" +
-                        "    @Override\n" +
-                        "    public String toString() {\n" +
-                        "        return \"Test{\" + \"}\";" +
-                        "    }\n" +
-                        "}"));
+                .generatesSources(JavaFileObjects.forResource("tostring/outputs/AutoData_Empty.java"));
     }
 }

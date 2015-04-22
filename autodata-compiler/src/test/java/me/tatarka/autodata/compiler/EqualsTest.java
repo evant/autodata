@@ -17,90 +17,22 @@ import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 @RunWith(JUnit4.class)
 public class EqualsTest {
     @Test
-    public void emptyClass() {
-        ASSERT.about(javaSource())
-                .that(JavaFileObjects.forSourceString("test.Test", "package test;\n" +
-                        "\n" +
-                        "import me.tatarka.autodata.base.AutoData;\n" +
-                        "import me.tatarka.autodata.plugins.AutoEquals;\n" +
-                        "\n" +
-                        "@AutoData(defaults = false)\n" +
-                        "@AutoEquals\n" +
-                        "public abstract class Test {}"))
-                .processedWith(new AutoDataAnnotationProcessor())
-                .compilesWithoutError()
-                .and()
-                .generatesSources(JavaFileObjects.forSourceString("test.AutoData_Test", "package test;\n" +
-                        "\n" +
-                        "final class AutoData_Test extends Test {\n" +
-                        "    @Override\n" +
-                        "    public boolean equals(Object o) {\n" +
-                        "        if (o == this) {\n" +
-                        "            return true;\n" +
-                        "        }\n" +
-                        "        if (o instanceof Test) {\n" +
-                        "            return true;\n" +
-                        "        }\n" +
-                        "        return false;\n" +
-                        "    }\n" +
-                        "    \n" +
-                        "    @Override\n" +
-                        "    public int hashCode() {\n" +
-                        "        int h = 1;\n" +
-                        "        return h;\n" +
-                        "    }\n" +
-                        "}"));
-    }
-
-    @Test
-    public void singlePrimitiveField() {
+    public void empty() {
             ASSERT.about(javaSource())
-                    .that(JavaFileObjects.forSourceString("test.Test", "package test;\n" +
-                            "\n" +
-                            "import me.tatarka.autodata.base.AutoData;\n" +
-                            "import me.tatarka.autodata.plugins.AutoEquals;\n" +
-                            "\n" +
-                            "@AutoData(defaults = false)\n" +
-                            "@AutoEquals\n" +
-                            "public abstract class Test {\n" +
-                            "    public abstract boolean test();\n" +
-                            "}"))
+                    .that(JavaFileObjects.forResource("equals/inputs/Empty.java"))
                     .processedWith(new AutoDataAnnotationProcessor())
                     .compilesWithoutError()
                     .and()
-                    .generatesSources(JavaFileObjects.forSourceString("test.AutoData_Test", "package test;\n" +
-                            "\n" +
-                            "final class AutoData_Test extends Test {\n" +
-                            "    private final boolean test;\n" +
-                            "    \n" +
-                            "    AutoData_Test(boolean test) {\n" +
-                            "        this.test = test;\n" +
-                            "    }\n" +
-                            "    \n" +
-                            "    @Override\n" +
-                            "    public boolean equals(Object o) {\n" +
-                            "        if (o == this) {\n" +
-                            "            return true;\n" +
-                            "        }\n" +
-                            "        if (o instanceof Test) {\n" +
-                            "            Test that = (Test) o;\n" +
-                            "            return this.test == that.test();\n" +
-                            "        }\n" +
-                            "        return false;\n" +
-                            "    }\n" +
-                            "    \n" +
-                            "    @Override\n" +
-                            "    public int hashCode() {\n" +
-                            "        int h = 1;\n" +
-                            "        h *= 1000003;\n" +
-                            "        h ^= test ? 1231 : 1237;\n" +
-                            "        return h;\n" +
-                            "    }\n" +
-                            "    \n" +
-                            "    @Override\n" +
-                            "    public boolean test() {\n" +
-                            "        return test;\n" +
-                            "    }\n" +
-                            "}"));
+                    .generatesSources(JavaFileObjects.forResource("equals/outputs/AutoData_Empty.java"));
+    }
+
+    @Test
+    public void primitiveField() {
+            ASSERT.about(javaSource())
+                    .that(JavaFileObjects.forResource("equals/inputs/PrimitiveField.java"))
+                    .processedWith(new AutoDataAnnotationProcessor())
+                    .compilesWithoutError()
+                    .and()
+                    .generatesSources(JavaFileObjects.forResource("equals/outputs/AutoData_PrimitiveField.java"));
     }
 }

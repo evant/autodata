@@ -1,0 +1,8 @@
+import me.tatarka.autodata.base.AutoData;
+import me.tatarka.autodata.plugins.AutoEquals;
+
+@AutoData(defaults = false)
+@AutoEquals
+public abstract class PrimitiveField {
+    public abstract boolean test();
+}

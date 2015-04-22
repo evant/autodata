@@ -17,161 +17,69 @@ import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 @RunWith(JUnit4.class)
 public class BaseTest {
     @Test
-    public void emptyClass() {
+    public void empty() {
         ASSERT.about(javaSource())
-                .that(JavaFileObjects.forSourceString("test.Test", "package test;\n" +
-                        "\n" +
-                        "import me.tatarka.autodata.base.AutoData;\n" +
-                        "\n" +
-                        "@AutoData(defaults = false)\n" +
-                        "public abstract class Test {}"))
+                .that(JavaFileObjects.forResource("base/inputs/Empty.java"))
                 .processedWith(new AutoDataAnnotationProcessor())
                 .compilesWithoutError()
                 .and()
-                .generatesSources(JavaFileObjects.forSourceString("test.AutoData_Test", "package test;\n" +
-                        "\n" +
-                        "final class AutoData_Test extends Test {}"));
+                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_Empty.java"));
     }
 
     @Test
-    public void singlePrimitiveField() {
+    public void primitiveField() {
         ASSERT.about(javaSource())
-                .that(JavaFileObjects.forSourceString("test.Test", "package test;\n" +
-                        "\n" +
-                        "import me.tatarka.autodata.base.AutoData;\n" +
-                        "\n" +
-                        "@AutoData(defaults = false)\n" +
-                        "public abstract class Test {\n" +
-                        "    public abstract int test();\n" +
-                        "}"))
+                .that(JavaFileObjects.forResource("base/inputs/PrimitiveField.java"))
                 .processedWith(new AutoDataAnnotationProcessor())
                 .compilesWithoutError()
                 .and()
-                .generatesSources(JavaFileObjects.forSourceString("test.AutoData_Test", "package test;\n" +
-                        "\n" +
-                        "final class AutoData_Test extends Test {\n" +
-                        "    private final int test;\n" +
-                        "    \n" +
-                        "    AutoData_Test(int test) {\n" +
-                        "        this.test = test;\n" +
-                        "    }\n" +
-                        "    \n" +
-                        "    @Override\n" +
-                        "    public int test() {\n" +
-                        "        return test;\n" +
-                        "    }\n" +
-                        "}"));
+                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_PrimitiveField.java"));
     }
 
     @Test
-    public void singleObjectField() {
+    public void objectField() {
         ASSERT.about(javaSource())
-                .that(JavaFileObjects.forSourceString("test.Test", "package test;\n" +
-                        "\n" +
-                        "import me.tatarka.autodata.base.AutoData;\n" +
-                        "\n" +
-                        "@AutoData(defaults = false)\n" +
-                        "public abstract class Test {\n" +
-                        "    public abstract String test();\n" +
-                        "}"))
+                .that(JavaFileObjects.forResource("base/inputs/ObjectField.java"))
                 .processedWith(new AutoDataAnnotationProcessor())
                 .compilesWithoutError()
                 .and()
-                .generatesSources(JavaFileObjects.forSourceString("test.AutoData_Test", "package test;\n" +
-                        "\n" +
-                        "final class AutoData_Test extends Test {\n" +
-                        "    private final String test;\n" +
-                        "    \n" +
-                        "    AutoData_Test(String test) {\n" +
-                        "        if (test == null) {\n" +
-                        "            throw new NullPointerException(\"Null test\");\n" +
-                        "        }\n" +
-                        "        this.test = test;\n" +
-                        "    }\n" +
-                        "    \n" +
-                        "    @Override\n" +
-                        "    public String test() {\n" +
-                        "        return test;\n" +
-                        "    }\n" +
-                        "}"));
+                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_ObjectField.java"));
     }
 
     @Test
-    public void getMethodField() {
+    public void getField() {
         ASSERT.about(javaSource())
-                .that(JavaFileObjects.forSourceString("test.Test", "package test;\n" +
-                        "\n" +
-                        "import me.tatarka.autodata.base.AutoData;\n" +
-                        "\n" +
-                        "@AutoData(defaults = false)\n" +
-                        "public abstract class Test {\n" +
-                        "    public abstract int getTest();\n" +
-                        "}"))
+                .that(JavaFileObjects.forResource("base/inputs/GetField.java"))
                 .processedWith(new AutoDataAnnotationProcessor())
                 .compilesWithoutError()
                 .and()
-                .generatesSources(JavaFileObjects.forSourceString("test.AutoData_Test", "package test;\n" +
-                        "\n" +
-                        "final class AutoData_Test extends Test {\n" +
-                        "    private final int test;\n" +
-                        "    \n" +
-                        "    AutoData_Test(int test) {\n" +
-                        "        this.test = test;\n" +
-                        "    }\n" +
-                        "    \n" +
-                        "    @Override\n" +
-                        "    public int getTest() {\n" +
-                        "        return test;\n" +
-                        "    }\n" +
-                        "}"));
+                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_GetField.java"));
     }
 
     @Test
-    public void getterWithoutReturnErrors() {
+    public void getNoReturn() {
         ASSERT.about(javaSource())
-                .that(JavaFileObjects.forSourceString("test.Test", "package test;\n" +
-                        "\n" +
-                        "import me.tatarka.autodata.base.AutoData;\n" +
-                        "\n" +
-                        "@AutoData(defaults = false)\n" +
-                        "public abstract class Test {\n" +
-                        "    public abstract void test();\n" +
-                        "}"))
+                .that(JavaFileObjects.forResource("base/inputs/ErrorGetNoReturn.java"))
                 .processedWith(new AutoDataAnnotationProcessor())
                 .failsToCompile()
-                .withErrorContaining("Abstract method test in class test.Test must have a non-void return type.");
+                .withErrorContaining("Abstract method test in class ErrorGetNoReturn must have a non-void return type.");
     }
 
     @Test
-    public void getterWithArgumentErrors() {
+    public void getWithArg() {
         ASSERT.about(javaSource())
-                .that(JavaFileObjects.forSourceString("test.Test", "package test;\n" +
-                        "\n" +
-                        "import me.tatarka.autodata.base.AutoData;\n" +
-                        "\n" +
-                        "@AutoData(defaults = false)\n" +
-                        "public abstract class Test {\n" +
-                        "    public abstract int test(int arg);\n" +
-                        "}"))
+                .that(JavaFileObjects.forResource("base/inputs/ErrorGetWithArg.java"))
                 .processedWith(new AutoDataAnnotationProcessor())
                 .failsToCompile()
-                .withErrorContaining("Abstract method test in class test.Test must not take any arguments.");
+                .withErrorContaining("Abstract method test in class ErrorGetWithArg must not take any arguments.");
     }
 
     @Test
-    public void multipleGettersWithSameNameErrors() {
+    public void multipleGets() {
         ASSERT.about(javaSource())
-                .that(JavaFileObjects.forSourceString("test.Test", "package test;\n" +
-                        "\n" +
-                        "import me.tatarka.autodata.base.AutoData;\n" +
-                        "\n" +
-                        "@AutoData(defaults = false)\n" +
-                        "public abstract class Test {\n" +
-                        "    public abstract int test();\n" +
-                        "    public abstract int getTest();\n" +
-                        "}"))
+                .that(JavaFileObjects.forResource("base/inputs/ErrorMultipleGets.java"))
                 .processedWith(new AutoDataAnnotationProcessor())
                 .failsToCompile()
-                .withErrorContaining("More than one AutoData field called test (getTest and test).");
+                .withErrorContaining("More than one AutoData field called test in class ErrorMultipleGets (getTest and test).");
     }
 }
