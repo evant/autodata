@@ -1,1 +1,1 @@
-include ':app', ':autodata', ':autodata-compiler'
+include ':autodata', ':autodata-compiler'

@@ -28,6 +28,8 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -40,24 +42,25 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
 import me.tatarka.autodata.base.AutoData;
-import me.tatarka.autodata.plugins.AutoEquals;
 import me.tatarka.autodata.compiler.AutoDataProcessor;
 import me.tatarka.autodata.compiler.model.AutoDataClass;
 import me.tatarka.autodata.compiler.model.AutoDataField;
 import me.tatarka.autodata.compiler.model.AutoDataGetterMethod;
+import me.tatarka.autodata.plugins.AutoEquals;
 
 /**
  * Created by evan on 4/20/15.
  */
 // Use a wildcard to allow user-defined AutoData annotations by putting them in the same package.
 @SupportedAnnotationTypes("me.tatarka.autodata.base.*")
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class AutoDataAnnotationProcessor extends AbstractProcessor {
     private Messager messager;
     private Filer filer;
     private Map<String, AutoDataProcessor> processors = Maps.newLinkedHashMap();
     private Set<Element> processedElements = Sets.newHashSet();
 
-    private static final List<Class> DEFAULTS = Arrays.asList(new Class[] {
+    private static final List<Class> DEFAULTS = Arrays.asList(new Class[]{
             AutoEquals.class
     });
 
@@ -85,9 +88,9 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
                     if (processedElements.contains(element)) {
                         continue;
                     }
-                    
+
                     processedElements.add(element);
-                    
+
                     try {
                         if (autoData != null) {
                             Set<Annotation> annotationSet = Sets.newHashSet();
@@ -106,7 +109,7 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
                             AnnotationMirror annotationMirror = element.getAnnotationMirrors().iterator().next();
                             Class<Annotation> userAnnotation = getDeclaredAnnotationClass(annotationMirror);
                             autoData = userAnnotation.getAnnotation(AutoData.class);
-                            
+
                             if (autoData == null) {
                                 messager.printMessage(Diagnostic.Kind.ERROR, "Custom AutoData annotation " + userAnnotation + " is not annotated with @AutoData.");
                                 continue;
@@ -120,10 +123,10 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
                                 }
                                 annotationSet.add(processAnnotation);
                             }
-                            
+
                             processAutoData(autoData, annotationSet, (TypeElement) element);
                         }
-                        
+
                     } catch (IOException | ClassNotFoundException | RuntimeException e) {
                         // Don't propagate this exception, which will confusingly crash the compiler.
                         // Instead, report a compiler error with the stack trace.
@@ -186,7 +189,7 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
 
         AutoDataClass autoDataClass = new AutoDataClass(packageName, className, fields, null);
         TypeSpec.Builder genClassBuilder = TypeSpec.classBuilder(autoDataClass.getGenSimpleClassName());
-        
+
         if (autoData.defaults()) {
             getProcessor(AutoEquals.class).process(null, autoDataClass, genClassBuilder);
             for (Annotation annotation : removeDefaults(processAnnotations)) {
@@ -203,7 +206,7 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
             }
         }
         getProcessor(AutoData.class).process(autoData, autoDataClass, genClassBuilder);
-        
+
         Writer writer = null;
         boolean threw = true;
         try {
@@ -222,11 +225,11 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
     private <T extends Annotation> AutoDataProcessor<T> getProcessor(Class<T> annotationClass) {
         return processors.get(annotationClass.getName());
     }
-    
+
     private <T extends Annotation> AutoDataProcessor<T> getProcessor(T annotation) {
         return processors.get(annotation.getClass().getInterfaces()[0].getName());
     }
-    
+
     private static Iterable<Annotation> removeDefaults(Iterable<Annotation> annotations) {
         return Iterables.filter(annotations, new Predicate<Annotation>() {
             @Override
@@ -251,7 +254,7 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
         }
         return Introspector.decapitalize(name);
     }
-    
+
     private static Class<Annotation> getDeclaredAnnotationClass(AnnotationMirror mirror) throws ClassNotFoundException {
         TypeElement element = (TypeElement) mirror.getAnnotationType().asElement();
         return (Class<Annotation>) Class.forName(element.getQualifiedName().toString());
