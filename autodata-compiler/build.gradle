@@ -1,0 +1,13 @@
+apply plugin: 'java'
+
+dependencies {
+    compile project(':autodata')
+    compile 'com.squareup:javapoet:1.0.0'
+    compile 'com.google.guava:guava:18.0'
+    compile 'com.google.auto.service:auto-service:1.0-rc2'
+    compile 'com.google.code.findbugs:jsr305:3.0.0'
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'com.google.testing.compile:compile-testing:1.0-SNAPSHOT'
+    testCompile files("${System.properties['java.home']}/../lib/tools.jar")
+}
