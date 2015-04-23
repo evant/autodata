@@ -1,9 +1,13 @@
 package me.tatarka.autodata.compiler.plugins;
 
 import com.google.auto.service.AutoService;
-import com.squareup.javapoet.*;
+import com.squareup.javapoet.ArrayTypeName;
+import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
 import me.tatarka.autodata.compiler.AutoDataProcessor;
 import me.tatarka.autodata.compiler.model.AutoDataClass;
+import me.tatarka.autodata.compiler.model.AutoDataClassBuilder;
 import me.tatarka.autodata.compiler.model.AutoDataField;
 import me.tatarka.autodata.plugins.AutoToString;
 
@@ -27,7 +31,7 @@ public class AutoToStringProcessor implements AutoDataProcessor<AutoToString> {
     }
 
     @Override
-    public void process(AutoToString annotation, AutoDataClass autoDataClass, TypeSpec.Builder genClassBuilder) {
+    public void process(AutoToString annotation, AutoDataClass autoDataClass, AutoDataClassBuilder genClassBuilder) {
         // toString
         MethodSpec.Builder toString = MethodSpec.methodBuilder("toString")
                 .addModifiers(Modifier.PUBLIC)

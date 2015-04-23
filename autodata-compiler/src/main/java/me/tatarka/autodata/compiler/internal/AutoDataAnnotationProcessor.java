@@ -8,20 +8,22 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.TypeSpec;
 import me.tatarka.autodata.base.AutoData;
 import me.tatarka.autodata.compiler.AutoDataProcessor;
 import me.tatarka.autodata.compiler.model.AutoDataClass;
 import me.tatarka.autodata.compiler.model.AutoDataField;
 import me.tatarka.autodata.compiler.model.AutoDataGetterMethod;
 import me.tatarka.autodata.plugins.AutoEquals;
+import me.tatarka.autodata.plugins.AutoToString;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.beans.Introspector;
@@ -42,11 +44,13 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
     private Messager messager;
     private Filer filer;
     private Elements elementUtils;
+    private Types typeUtils;
     private Map<String, AutoDataProcessor> processors = Maps.newLinkedHashMap();
+    private AutoDataProcessor<AutoData> baseProcessor = new AutoDataBaseProcessor();
     private Set<Element> processedElements = Sets.newHashSet();
 
     private static final List<Class> DEFAULTS = Arrays.asList(new Class[]{
-            AutoEquals.class
+            AutoEquals.class, AutoToString.class
     });
 
     @Override
@@ -55,7 +59,9 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
         messager = processingEnv.getMessager();
         filer = processingEnv.getFiler();
         elementUtils = processingEnv.getElementUtils();
+        typeUtils = processingEnv.getTypeUtils();
 
+        baseProcessor.init(processingEnv);
         ServiceLoader<AutoDataProcessor> serviceLoader = ServiceLoader.load(AutoDataProcessor.class);
         for (AutoDataProcessor processor : serviceLoader) {
             processor.init(processingEnv);
@@ -83,7 +89,7 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
                             Set<Annotation> annotationSet = Sets.newHashSet();
                             for (AnnotationMirror annotationMirror : element.getAnnotationMirrors()) {
                                 Class<Annotation> processAnnotationClass = getDeclaredAnnotationClass(annotationMirror);
-                                if (processAnnotationClass.getName().equals(AutoData.class.getName())) {
+                                if (getAnnotationName(processAnnotationClass).equals(AutoData.class.getName())) {
                                     // Skip adding AutoData processor, as it's already hard-coded to always run.
                                     continue;
                                 }
@@ -104,8 +110,8 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
 
                             Set<Annotation> annotationSet = Sets.newHashSet();
                             for (Annotation processAnnotation : userAnnotation.getAnnotations()) {
-                                if (processAnnotation.getClass().getName().equals(AutoData.class.getName())) {
-                                    // Skipp adding AutoData processor, as it's already hard-coded to always run.
+                                if (getAnnotationName(processAnnotation).equals(AutoData.class.getName())) {
+                                    // Skip adding AutoData processor, as it's already hard-coded to always run.
                                     continue;
                                 }
                                 annotationSet.add(processAnnotation);
@@ -169,29 +175,39 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
             return;
         }
 
-
         String packageName = elementUtils.getPackageOf(classElement).getQualifiedName().toString();
         String className = PREFIX + buildClassName(classElement);
+        List<ExecutableElement> declaredMethods = ElementFilter.methodsIn(classElement.getEnclosedElements());
+
 
         AutoDataClass autoDataClass = new AutoDataClass(classElement, fieldMap.values());
-        TypeSpec.Builder genClassBuilder = TypeSpec.classBuilder(className);
+        AutoDataClassBuilderImpl genClassBuilder = new AutoDataClassBuilderImpl(className, autoDataClass, declaredMethods, messager, typeUtils);
 
+
+        Iterable<Annotation> pluginAnnotations;
         if (autoData.defaults()) {
-            getProcessor(AutoEquals.class).process(null, autoDataClass, genClassBuilder);
-            for (Annotation annotation : removeDefaults(processAnnotations)) {
-                getProcessor(annotation).process(annotation, autoDataClass, genClassBuilder);
+            for (Class<?> annotation : DEFAULTS) {
+                String name = getAnnotationName(annotation);
+                genClassBuilder.setCurrentPluginName(name);
+                processors.get(name).process(null, autoDataClass, genClassBuilder);
             }
+            pluginAnnotations = removeDefaults(processAnnotations);
         } else {
-            for (Annotation annotation : processAnnotations) {
-                AutoDataProcessor<Annotation> processor = getProcessor(annotation);
-                if (processor == null) {
-                    messager.printMessage(Diagnostic.Kind.ERROR, "Missing AutoDataProcessor for annotation " + annotation + ".");
-                    continue;
-                }
-                processor.process(annotation, autoDataClass, genClassBuilder);
-            }
+            pluginAnnotations = processAnnotations;
         }
-        getProcessor(AutoData.class).process(autoData, autoDataClass, genClassBuilder);
+
+        for (Annotation annotation : pluginAnnotations) {
+            String name = getAnnotationName(annotation);
+            genClassBuilder.setCurrentPluginName(name);
+            AutoDataProcessor<Annotation> processor = processors.get(name);
+            if (processor == null) {
+                messager.printMessage(Diagnostic.Kind.ERROR, "Missing AutoDataProcessor for annotation " + annotation + ".");
+                continue;
+            }
+            processor.process(annotation, autoDataClass, genClassBuilder);
+        }
+
+        baseProcessor.process(autoData, autoDataClass, genClassBuilder);
 
         String qualifiedClassName;
         if (Strings.isNullOrEmpty(packageName)) {
@@ -215,12 +231,12 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
         }
     }
 
-    private <T extends Annotation> AutoDataProcessor<T> getProcessor(Class<T> annotationClass) {
-        return processors.get(annotationClass.getName());
+    private <T extends Annotation> String getAnnotationName(Class<?> annotationClass) {
+        return annotationClass.getName();
     }
 
-    private <T extends Annotation> AutoDataProcessor<T> getProcessor(T annotation) {
-        return processors.get(annotation.getClass().getInterfaces()[0].getName());
+    private <T extends Annotation> String getAnnotationName(T annotation) {
+        return annotation.getClass().getInterfaces()[0].getName();
     }
 
     private static Iterable<Annotation> removeDefaults(Iterable<Annotation> annotations) {

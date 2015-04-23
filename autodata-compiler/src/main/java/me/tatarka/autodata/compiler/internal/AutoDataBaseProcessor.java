@@ -1,10 +1,13 @@
 package me.tatarka.autodata.compiler.internal;
 
-import com.google.auto.service.AutoService;
-import com.squareup.javapoet.*;
+import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeVariableName;
 import me.tatarka.autodata.base.AutoData;
 import me.tatarka.autodata.compiler.AutoDataProcessor;
 import me.tatarka.autodata.compiler.model.AutoDataClass;
+import me.tatarka.autodata.compiler.model.AutoDataClassBuilder;
 import me.tatarka.autodata.compiler.model.AutoDataField;
 import me.tatarka.autodata.compiler.model.AutoDataGetterMethod;
 
@@ -18,7 +21,7 @@ import java.util.List;
 /**
  * Created by evan on 4/20/15.
  */
-@AutoService(AutoDataProcessor.class)
+// This one isn't a service since it's hard-coded to always run.
 public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
     @Override
     public Class<AutoData> forAnnotation() {
@@ -31,8 +34,11 @@ public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
     }
 
     @Override
-    public void process(AutoData autoData, AutoDataClass autoDataClass, TypeSpec.Builder genClassBuilder) {
-        genClassBuilder.addModifiers(Modifier.FINAL)
+    public void process(AutoData autoData, AutoDataClass autoDataClass, AutoDataClassBuilder genClassBuilderInterface) {
+        // We shall cast here to get some extra secret-sauce not available to other plugins.
+        AutoDataClassBuilderImpl genClassBuilder = (AutoDataClassBuilderImpl) genClassBuilderInterface;
+
+        genClassBuilder.builder.addModifiers(Modifier.FINAL)
                 .superclass(TypeName.get(autoDataClass.getElement().asType()));
 
 
@@ -42,7 +48,7 @@ public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
             for (int i = 0; i < boundNames.length; i++) {
                 boundNames[i] = TypeName.get(bounds.get(i));
             }
-            genClassBuilder.addTypeVariable(TypeVariableName.get(typeElement.getSimpleName().toString(), boundNames));
+            genClassBuilder.builder.addTypeVariable(TypeVariableName.get(typeElement.getSimpleName().toString(), boundNames));
         }
 
         Collection<AutoDataField> fields = autoDataClass.getFields();
@@ -65,7 +71,7 @@ public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
                 }
                 constructor.addStatement("this.$L = $L", field.getName(), field.getName());
             }
-            genClassBuilder.addMethod(constructor.build());
+            genClassBuilder.builder.addMethod(constructor.build());
         }
 
         // Private fields
@@ -76,7 +82,7 @@ public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
 //                        ClassName.get((TypeElement) annotationMirror.getAnnotationType().asElement())).build();
 //                builder.addAnnotation(spec);
 //            }
-            genClassBuilder.addField(builder.build());
+            genClassBuilder.builder.addField(builder.build());
         }
 
         // Getter methods
@@ -98,7 +104,7 @@ public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
 //                builder.addAnnotation(annotation);
 //            }
             builder.addStatement("return $L", field.getName());
-            genClassBuilder.addMethod(builder.build());
+            genClassBuilder.builder.addMethod(builder.build());
         }
 
 //        // Builder

@@ -6,6 +6,11 @@ final class AutoData_BooleanField extends BooleanField {
     }
 
     @Override
+    public boolean test() {
+        return test;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (o == this) {
             return true;
@@ -23,10 +28,5 @@ final class AutoData_BooleanField extends BooleanField {
         h *= 1000003;
         h ^= test ? 1231 : 1237;
         return h;
-    }
-
-    @Override
-    public boolean test() {
-        return test;
     }
 }

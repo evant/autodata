@@ -1,7 +1,7 @@
 package me.tatarka.autodata.compiler;
 
-import com.squareup.javapoet.TypeSpec;
 import me.tatarka.autodata.compiler.model.AutoDataClass;
+import me.tatarka.autodata.compiler.model.AutoDataClassBuilder;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import java.lang.annotation.Annotation;
@@ -14,5 +14,5 @@ public interface AutoDataProcessor<T extends Annotation> {
 
     void init(ProcessingEnvironment env);
 
-    void process(T annotation, AutoDataClass autoDataClass, TypeSpec.Builder genClassBuilder);
+    void process(T annotation, AutoDataClass autoDataClass, AutoDataClassBuilder genClassBuilder);
 }

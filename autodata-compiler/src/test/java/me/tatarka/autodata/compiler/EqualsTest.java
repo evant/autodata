@@ -35,4 +35,14 @@ public class EqualsTest {
                     .and()
                     .generatesSources(JavaFileObjects.forResource("equals/outputs/AutoData_BooleanField.java"));
     }
+
+    @Test
+    public void underride() {
+        ASSERT.about(javaSource())
+                .that(JavaFileObjects.forResource("equals/inputs/Underride.java"))
+                .processedWith(new AutoDataAnnotationProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("equals/outputs/AutoData_Underride.java"));
+    }
 }

@@ -6,12 +6,12 @@ final class AutoData_Field extends Field {
     }
 
     @Override
-    public String toString() {
-        return "Field{" + "test=" + test + "}";
+    public int test() {
+        return test;
     }
 
     @Override
-    public int test() {
-        return test;
+    public String toString() {
+        return "Field{" + "test=" + test + "}";
     }
 }

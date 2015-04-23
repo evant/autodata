@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
 import me.tatarka.autodata.compiler.AutoDataProcessor;
 import me.tatarka.autodata.compiler.model.AutoDataClass;
+import me.tatarka.autodata.compiler.model.AutoDataClassBuilder;
 import me.tatarka.autodata.compiler.model.AutoDataField;
 import me.tatarka.autodata.plugins.AutoEquals;
 
@@ -28,7 +29,7 @@ public class AutoEqualsProcessor implements AutoDataProcessor<AutoEquals> {
     }
 
     @Override
-    public void process(AutoEquals annotation, final AutoDataClass autoDataClass, TypeSpec.Builder genClassBuilder) {
+    public void process(AutoEquals annotation, final AutoDataClass autoDataClass, AutoDataClassBuilder genClassBuilder) {
         // equals
         {
             MethodSpec.Builder equals = MethodSpec.methodBuilder("equals")
