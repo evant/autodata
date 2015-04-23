@@ -57,6 +57,46 @@ public class BaseTest {
     }
 
     @Test
+    public void protectedField() {
+        ASSERT.about(javaSource())
+                .that(JavaFileObjects.forResource("base/inputs/ProtectedField.java"))
+                .processedWith(new AutoDataAnnotationProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_ProtectedField.java"));
+    }
+
+    @Test
+    public void genericField() {
+        ASSERT.about(javaSource())
+                .that(JavaFileObjects.forResource("base/inputs/GenericField.java"))
+                .processedWith(new AutoDataAnnotationProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_GenericField.java"));
+    }
+
+    @Test
+    public void complexGenerics() {
+        ASSERT.about(javaSource())
+                .that(JavaFileObjects.forResource("base/inputs/ComplexGenerics.java"))
+                .processedWith(new AutoDataAnnotationProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_ComplexGenerics.java"));
+    }
+
+    @Test
+    public void nested() {
+        ASSERT.about(javaSource())
+                .that(JavaFileObjects.forResource("base/inputs/Nested.java"))
+                .processedWith(new AutoDataAnnotationProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_Nested_Inner.java"));
+    }
+
+    @Test
     public void getNoReturn() {
         ASSERT.about(javaSource())
                 .that(JavaFileObjects.forResource("base/inputs/ErrorGetNoReturn.java"))

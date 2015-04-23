@@ -1,10 +1,7 @@
 package me.tatarka.autodata.compiler.internal;
 
 import com.google.auto.service.AutoService;
-import com.squareup.javapoet.FieldSpec;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.*;
 import me.tatarka.autodata.base.AutoData;
 import me.tatarka.autodata.compiler.AutoDataProcessor;
 import me.tatarka.autodata.compiler.model.AutoDataClass;
@@ -13,8 +10,10 @@ import me.tatarka.autodata.compiler.model.AutoDataGetterMethod;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.TypeMirror;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by evan on 4/20/15.
@@ -35,6 +34,16 @@ public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
     public void process(AutoData autoData, AutoDataClass autoDataClass, TypeSpec.Builder genClassBuilder) {
         genClassBuilder.addModifiers(Modifier.FINAL)
                 .superclass(TypeName.get(autoDataClass.getElement().asType()));
+
+
+        for (TypeParameterElement typeElement : autoDataClass.getElement().getTypeParameters()) {
+            List<? extends TypeMirror> bounds = typeElement.getBounds();
+            TypeName[] boundNames = new TypeName[typeElement.getBounds().size()];
+            for (int i = 0; i < boundNames.length; i++) {
+                boundNames[i] = TypeName.get(bounds.get(i));
+            }
+            genClassBuilder.addTypeVariable(TypeVariableName.get(typeElement.getSimpleName().toString(), boundNames));
+        }
 
         Collection<AutoDataField> fields = autoDataClass.getFields();
         if (fields.isEmpty()) {
@@ -75,9 +84,16 @@ public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
             AutoDataGetterMethod method = field.getGetterMethod();
 
             MethodSpec.Builder builder = MethodSpec.methodBuilder(method.getName())
-                    .addModifiers(Modifier.PUBLIC)
                     .addAnnotation(Override.class)
                     .returns(TypeName.get(field.getType()));
+
+            for (Modifier modifier : method.getElement().getModifiers()) {
+                if (modifier == Modifier.ABSTRACT) {
+                    continue;
+                }
+                builder.addModifiers(modifier);
+            }
+
 //            for (AnnotationSpec annotation : method.getAnnotations()) {
 //                builder.addAnnotation(annotation);
 //            }

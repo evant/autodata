@@ -1,6 +1,7 @@
 package me.tatarka.autodata.compiler.internal;
 
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -20,6 +21,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.beans.Introspector;
@@ -35,8 +37,11 @@ import java.util.*;
 @SupportedAnnotationTypes("me.tatarka.autodata.base.*")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class AutoDataAnnotationProcessor extends AbstractProcessor {
+    private static final String PREFIX = "AutoData_";
+
     private Messager messager;
     private Filer filer;
+    private Elements elementUtils;
     private Map<String, AutoDataProcessor> processors = Maps.newLinkedHashMap();
     private Set<Element> processedElements = Sets.newHashSet();
 
@@ -49,6 +54,7 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
         super.init(processingEnv);
         messager = processingEnv.getMessager();
         filer = processingEnv.getFiler();
+        elementUtils = processingEnv.getElementUtils();
 
         ServiceLoader<AutoDataProcessor> serviceLoader = ServiceLoader.load(AutoDataProcessor.class);
         for (AutoDataProcessor processor : serviceLoader) {
@@ -163,8 +169,12 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
             return;
         }
 
+
+        String packageName = elementUtils.getPackageOf(classElement).getQualifiedName().toString();
+        String className = PREFIX + buildClassName(classElement);
+
         AutoDataClass autoDataClass = new AutoDataClass(classElement, fieldMap.values());
-        TypeSpec.Builder genClassBuilder = TypeSpec.classBuilder(autoDataClass.getGenSimpleClassName());
+        TypeSpec.Builder genClassBuilder = TypeSpec.classBuilder(className);
 
         if (autoData.defaults()) {
             getProcessor(AutoEquals.class).process(null, autoDataClass, genClassBuilder);
@@ -183,12 +193,19 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
         }
         getProcessor(AutoData.class).process(autoData, autoDataClass, genClassBuilder);
 
+        String qualifiedClassName;
+        if (Strings.isNullOrEmpty(packageName)) {
+            qualifiedClassName = className;
+        } else {
+            qualifiedClassName = packageName + "." + className;
+        }
+
         Writer writer = null;
         boolean threw = true;
         try {
-            JavaFileObject jfo = filer.createSourceFile(autoDataClass.getGenQualifiedClassName());
+            JavaFileObject jfo = filer.createSourceFile(qualifiedClassName);
             writer = jfo.openWriter();
-            JavaFile javaFile = JavaFile.builder(autoDataClass.getPackageName(), genClassBuilder.build())
+            JavaFile javaFile = JavaFile.builder(packageName, genClassBuilder.build())
                     .skipJavaLangImports(true)
                     .build();
             javaFile.writeTo(writer);
@@ -227,5 +244,15 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
     private static Class<Annotation> getDeclaredAnnotationClass(AnnotationMirror mirror) throws ClassNotFoundException {
         TypeElement element = (TypeElement) mirror.getAnnotationType().asElement();
         return (Class<Annotation>) Class.forName(element.getQualifiedName().toString());
+    }
+
+    private static String buildClassName(Element classElement) {
+        String name = classElement.getSimpleName().toString();
+        Element enclosing = classElement.getEnclosingElement();
+        if (enclosing instanceof PackageElement) {
+            return name;
+        } else {
+            return buildClassName(enclosing) + "_" + name;
+        }
     }
 }

@@ -1,7 +1,5 @@
 package me.tatarka.autodata.compiler.model;
 
-import com.google.common.base.Strings;
-
 import javax.annotation.Nonnull;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
@@ -36,17 +34,5 @@ public final class AutoDataClass {
 
     public String getPackageName() {
         return ((PackageElement) element.getEnclosingElement()).getQualifiedName().toString();
-    }
-
-    public String getGenSimpleClassName() {
-        return "AutoData_" + element.getSimpleName();
-    }
-
-    public String getGenQualifiedClassName() {
-        if (Strings.isNullOrEmpty(getPackageName())) {
-            return getGenSimpleClassName();
-        } else {
-            return getPackageName() + "." + getGenSimpleClassName();
-        }
     }
 }

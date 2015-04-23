@@ -15,12 +15,22 @@ import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 @RunWith(JUnit4.class)
 public class ToStringTest {
     @Test
-    public void emptyClass() {
+    public void empty() {
         ASSERT.about(javaSource())
                 .that(JavaFileObjects.forResource("tostring/inputs/Empty.java"))
                 .processedWith(new AutoDataAnnotationProcessor())
                 .compilesWithoutError()
                 .and()
                 .generatesSources(JavaFileObjects.forResource("tostring/outputs/AutoData_Empty.java"));
+    }
+
+    @Test
+    public void field() {
+        ASSERT.about(javaSource())
+                .that(JavaFileObjects.forResource("tostring/inputs/Field.java"))
+                .processedWith(new AutoDataAnnotationProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("tostring/outputs/AutoData_Field.java"));
     }
 }
