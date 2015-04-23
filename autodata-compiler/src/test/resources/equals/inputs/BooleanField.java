@@ -3,6 +3,6 @@ import me.tatarka.autodata.plugins.AutoEquals;
 
 @AutoData(defaults = false)
 @AutoEquals
-public abstract class PrimitiveField {
+public abstract class BooleanField {
     public abstract boolean test();
 }

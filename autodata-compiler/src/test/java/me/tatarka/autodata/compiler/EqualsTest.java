@@ -27,12 +27,12 @@ public class EqualsTest {
     }
 
     @Test
-    public void primitiveField() {
+    public void booleanField() {
             ASSERT.about(javaSource())
-                    .that(JavaFileObjects.forResource("equals/inputs/PrimitiveField.java"))
+                    .that(JavaFileObjects.forResource("equals/inputs/BooleanField.java"))
                     .processedWith(new AutoDataAnnotationProcessor())
                     .compilesWithoutError()
                     .and()
-                    .generatesSources(JavaFileObjects.forResource("equals/outputs/AutoData_PrimitiveField.java"));
+                    .generatesSources(JavaFileObjects.forResource("equals/outputs/AutoData_BooleanField.java"));
     }
 }

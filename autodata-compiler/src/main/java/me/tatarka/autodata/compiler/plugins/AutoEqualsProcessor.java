@@ -1,21 +1,16 @@
 package me.tatarka.autodata.compiler.plugins;
 
 import com.google.auto.service.AutoService;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
-import com.squareup.javapoet.ArrayTypeName;
-import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeSpec;
-
-import javax.lang.model.element.Modifier;
-
+import com.squareup.javapoet.*;
 import me.tatarka.autodata.compiler.AutoDataProcessor;
 import me.tatarka.autodata.compiler.model.AutoDataClass;
 import me.tatarka.autodata.compiler.model.AutoDataField;
 import me.tatarka.autodata.plugins.AutoEquals;
+
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.Modifier;
+import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * Created by evan on 4/20/15.
@@ -25,6 +20,11 @@ public class AutoEqualsProcessor implements AutoDataProcessor<AutoEquals> {
     @Override
     public Class<AutoEquals> forAnnotation() {
         return AutoEquals.class;
+    }
+
+    @Override
+    public void init(ProcessingEnvironment env) {
+
     }
 
     @Override
@@ -41,18 +41,22 @@ public class AutoEqualsProcessor implements AutoDataProcessor<AutoEquals> {
                     .beginControlFlow("if (o == this)")
                     .addStatement("return true")
                     .endControlFlow()
-                    .beginControlFlow("if (o instanceof $T)", autoDataClass.getType());
+                    .beginControlFlow("if (o instanceof $T)", autoDataClass.getElement());
 
             if (autoDataClass.getFields().isEmpty()) {
                 block.addStatement("return true");
             } else {
-                block.addStatement("$T that = ($T) o", autoDataClass.getType(), autoDataClass.getType());
-                block.addStatement("return\n" + Joiner.on("\n&&").join(Iterables.transform(autoDataClass.getFields(), new Function<AutoDataField, String>() {
-                    @Override
-                    public String apply(AutoDataField input) {
-                        return equalsExpr(autoDataClass, input);
+                block.addStatement("$T that = ($T) o", autoDataClass.getElement(), autoDataClass.getElement());
+
+                block.add("return ");
+                for (Iterator<AutoDataField> iterator = autoDataClass.getFields().iterator(); iterator.hasNext(); ) {
+                    AutoDataField field = iterator.next();
+                    block.add(equalsExpr(field));
+                    if (iterator.hasNext()) {
+                        block.add(" && ");
                     }
-                })));
+                }
+                block.add(";");
             }
             block.endControlFlow();
             block.addStatement("return false");
@@ -83,44 +87,55 @@ public class AutoEqualsProcessor implements AutoDataProcessor<AutoEquals> {
         }
     }
 
-    private static String equalsExpr(AutoDataClass autoDataClass, AutoDataField field) {
+    private static CodeBlock equalsExpr(AutoDataField field) {
+        CodeBlock.Builder block = CodeBlock.builder();
+
         String thisName = "this." + field.getName();
-        String thatName = "that." + autoDataClass.getGetterMethodForField(field).getName() + "()";
-        TypeName type = field.getType();
+        String thatName = "that." + field.getGetterMethod().getName() + "()";
+        TypeName type = TypeName.get(field.getType());
         
         if (type == TypeName.FLOAT) {
-            return "Float.floatToIntBits(" + thisName + ") == Float.floatToIntBits(" + thatName + ")";
+            block.add("Float.floatToIntBits($L) == Float.floatToIntBits($L)", thisName, thatName);
         } else if (type == TypeName.DOUBLE) {
-            return "Double.doubleToLongBits(" + thisName + ") == Double.doubleToLongBits(" + thatName + ")";
+            block.add("Double.doubleToLongBits($L) == Double.doubleToLongBits($L)", thisName, thatName);
         } else if (type.isPrimitive()) {
-            return thisName + " == " + thatName;
+            block.add("$L == $L", thisName, thatName);
         } else if (type instanceof ArrayTypeName) {
-            return "java.util.Arrays.equals(" + thisName + ", " + thatName + ")";
+            block.add("$T.equals($L, $L)", Arrays.class, thisName, thatName);
         } else if (field.isNullable()) {
-            return "(" + thisName + " == null) ? (" + thatName + " == null) : " + thisName + ".equals(" + thatName + ")";
+            block.add("($L == null) ? ($L == null) : $L.equals($L)", thisName, thatName, thisName, thatName);
         } else {
-            return thisName + ".equals(" + thatName + ")";
+            block.add("$L.equals($L)", thisName, thatName);
         }
+
+        return block.build();
     }
 
-    private static String hashcodeExpr(AutoDataField field) {
+    private static CodeBlock hashcodeExpr(AutoDataField field) {
+        CodeBlock.Builder block = CodeBlock.builder();
+
         String name = field.getName();
-        TypeName type = field.getType();
+        TypeName type = TypeName.get(field.getType());
 
         if (type == TypeName.BYTE || type == TypeName.SHORT || type == TypeName.CHAR || type == TypeName.INT) {
-            return name;
+            block.add(name);
         } else if (type == TypeName.LONG) {
-            return "(" + name + " >>> 32) ^ " + name;
+            block.add("($L >>> 32) ^ $L", name, name);
         } else if (type == TypeName.FLOAT) {
-            return "Float.floatToIntBits(" + name + ")";
+            block.add("Float.floatToIntBits($L)", name);
         } else if (type == TypeName.DOUBLE) {
-            return "Double.doubleToLongBits(" + name + ") >>> 32) ^ Double.doubleToLongBits(" + name + ")";
+            block.add("Double.doubleToLongBits($L) >>> 32) ^ Double.doubleToLongBits($L)", name, name);
         } else if (type == TypeName.BOOLEAN) {
-            return name + " ? 1231 : 1237";
+            block.add("$L ? 1231 : 1237", name);
         } else if (type instanceof ArrayTypeName) {
-            return "java.util.Arrays.hashcode(" + name + ")";
+            block.add("$T.hashCode($L)", Arrays.class, name);
         } else {
-            return (field.isNullable() ? "(" + name + " == null) ? 0 : " : "") + name + ".hashcode()";
+            if (field.isNullable()) {
+                block.add("($L == null) ? 0 : ", name);
+            }
+            block.add("$L.hashCode()", name);
         }
+
+        return block.build();
     }
 }

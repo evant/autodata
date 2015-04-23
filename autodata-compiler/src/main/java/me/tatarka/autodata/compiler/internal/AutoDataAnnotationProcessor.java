@@ -2,10 +2,11 @@ package me.tatarka.autodata.compiler.internal;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import com.google.common.collect.*;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import me.tatarka.autodata.base.AutoData;
 import me.tatarka.autodata.compiler.AutoDataProcessor;
@@ -51,6 +52,7 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
 
         ServiceLoader<AutoDataProcessor> serviceLoader = ServiceLoader.load(AutoDataProcessor.class);
         for (AutoDataProcessor processor : serviceLoader) {
+            processor.init(processingEnv);
             processors.put(processor.forAnnotation().getName(), processor);
         }
     }
@@ -124,7 +126,7 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
             return;
         }
 
-        BiMap<AutoDataField, AutoDataGetterMethod> fields = HashBiMap.create();
+        Map<String, AutoDataField> fieldMap = Maps.newLinkedHashMap();
 
         boolean wasError = false; // Set this so we can show as many errors as we can before bailing out.
         for (Element element : classElement.getEnclosedElements()) {
@@ -144,29 +146,24 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
             }
 
             String methodName = element.getSimpleName().toString();
-            TypeName methodReturnType = TypeName.get(methodElement.getReturnType());
-
             String fieldName = nameWithoutPrefix(methodName);
+            AutoDataGetterMethod method = new AutoDataGetterMethod(methodElement);
+            AutoDataField field = new AutoDataField(fieldName, method);
 
-            AutoDataField field = new AutoDataField(fieldName, methodReturnType, false);
-            AutoDataGetterMethod previousMethod;
-            if ((previousMethod = fields.get(field)) != null) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "More than one AutoData field called " + fieldName + " in class " + classElement.getQualifiedName() + " (" + methodName + " and " + previousMethod.getName() + ").", methodElement);
+            AutoDataField previousField;
+            if ((previousField = fieldMap.get(field.getName())) != null) {
+                messager.printMessage(Diagnostic.Kind.ERROR, "More than one AutoData field called " + fieldName + " in class " + classElement.getQualifiedName() + " (" + methodName + " and " + previousField.getGetterMethod().getName() + ").", methodElement);
                 wasError = true;
             }
 
-            AutoDataGetterMethod method = new AutoDataGetterMethod(methodName, methodReturnType);
-            fields.put(field, method);
+            fieldMap.put(fieldName, field);
         }
 
         if (wasError) {
             return;
         }
 
-        String packageName = packageName(classElement.getQualifiedName().toString());
-        TypeName className = TypeName.get(classElement.asType());
-
-        AutoDataClass autoDataClass = new AutoDataClass(packageName, className, fields, null);
+        AutoDataClass autoDataClass = new AutoDataClass(classElement, fieldMap.values());
         TypeSpec.Builder genClassBuilder = TypeSpec.classBuilder(autoDataClass.getGenSimpleClassName());
 
         if (autoData.defaults()) {
@@ -191,7 +188,7 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
         try {
             JavaFileObject jfo = filer.createSourceFile(autoDataClass.getGenQualifiedClassName());
             writer = jfo.openWriter();
-            JavaFile javaFile = JavaFile.builder(packageName, genClassBuilder.build())
+            JavaFile javaFile = JavaFile.builder(autoDataClass.getPackageName(), genClassBuilder.build())
                     .skipJavaLangImports(true)
                     .build();
             javaFile.writeTo(writer);
@@ -216,13 +213,6 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
                 return !DEFAULTS.contains(input.getClass());
             }
         });
-    }
-
-    private static String packageName(String className) {
-        if (className == null || className.isEmpty() || !className.contains(".")) {
-            return "";
-        }
-        return className.substring(0, className.lastIndexOf("."));
     }
 
     private static String nameWithoutPrefix(String name) {

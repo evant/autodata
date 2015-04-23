@@ -1,22 +1,22 @@
-final class AutoData_PrimitiveField extends PrimitiveField {
+final class AutoData_BooleanField extends BooleanField {
     private final boolean test;
-    
-    AutoData_PrimitiveField(boolean test) {
+
+    AutoData_BooleanField(boolean test) {
         this.test = test;
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (o == this) {
             return true;
         }
-        if (o instanceof PrimitiveField) {
-            PrimitiveField that = (PrimitiveField) o;
+        if (o instanceof BooleanField) {
+            BooleanField that = (BooleanField) o;
             return this.test == that.test();
         }
         return false;
     }
-    
+
     @Override
     public int hashCode() {
         int h = 1;
@@ -24,7 +24,7 @@ final class AutoData_PrimitiveField extends PrimitiveField {
         h ^= test ? 1231 : 1237;
         return h;
     }
-    
+
     @Override
     public boolean test() {
         return test;

@@ -1,15 +1,14 @@
 package me.tatarka.autodata.compiler.model;
 
-import com.google.common.collect.BiMap;
-import com.squareup.javapoet.TypeName;
-
-import java.util.Collection;
-import java.util.Collections;
+import com.google.common.base.Strings;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import me.tatarka.autodata.compiler.util.JavaPoetUtil;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -19,57 +18,35 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * methods and fields.
  */
 public final class AutoDataClass {
-    private String packageName;
-    private TypeName type;
-    private BiMap<AutoDataField, AutoDataGetterMethod> fields;
-    @Nullable
-    private AutoDataBuilderClass builder;
+    private TypeElement element;
+    private Set<AutoDataField> fields;
 
-    public AutoDataClass(@Nonnull String packageName, @Nonnull TypeName type, @Nonnull BiMap<AutoDataField, AutoDataGetterMethod> fields, @Nullable AutoDataBuilderClass builder) {
-        this.packageName = checkNotNull(packageName);
-        this.type = checkNotNull(type);
-        this.fields = checkNotNull(fields);
-        this.builder = builder;
+    public AutoDataClass(TypeElement element, @Nonnull Collection<AutoDataField> fields) {
+        this.element = checkNotNull(element);
+        this.fields = new LinkedHashSet<>(checkNotNull(fields));
+    }
+
+    public TypeElement getElement() {
+        return element;
+    }
+
+    public Set<AutoDataField> getFields() {
+        return Collections.unmodifiableSet(fields);
     }
 
     public String getPackageName() {
-        return packageName;
-    }
-
-    public TypeName getType() {
-        return type;
-    }
-
-    public Collection<AutoDataField> getFields() {
-        return Collections.unmodifiableSet(fields.keySet());
-    }
-
-    public Collection<AutoDataGetterMethod> getGetterMethods() {
-        return Collections.unmodifiableCollection(fields.values());
-    }
-
-    @Nullable
-    public AutoDataBuilderClass getBuilder() {
-        return builder;
+        return ((PackageElement) element.getEnclosingElement()).getQualifiedName().toString();
     }
 
     public String getGenSimpleClassName() {
-        return "AutoData_" + JavaPoetUtil.getSimpleTypeName(type);
+        return "AutoData_" + element.getSimpleName();
     }
 
     public String getGenQualifiedClassName() {
-        if (packageName.isEmpty()) {
+        if (Strings.isNullOrEmpty(getPackageName())) {
             return getGenSimpleClassName();
         } else {
-            return packageName + "." + getGenSimpleClassName();
+            return getPackageName() + "." + getGenSimpleClassName();
         }
-    }
-
-    public AutoDataField getFieldForGetterMethod(AutoDataGetterMethod method) {
-        return fields.inverse().get(method);
-    }
-
-    public AutoDataGetterMethod getGetterMethodForField(AutoDataField field) {
-        return fields.get(field);
     }
 }

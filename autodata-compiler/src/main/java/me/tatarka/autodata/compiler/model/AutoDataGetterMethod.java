@@ -1,13 +1,7 @@
 package me.tatarka.autodata.compiler.model;
 
-import com.google.common.collect.Sets;
-import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.TypeName;
-
-import java.util.Collections;
-import java.util.Set;
-
 import javax.annotation.Nonnull;
+import javax.lang.model.element.ExecutableElement;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -15,29 +9,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Data about a getter method that will be generated based on an AutoData getter.
  */
 public final class AutoDataGetterMethod {
-    private String name;
-    private TypeName returnType;
-    private Set<AnnotationSpec> annotations = Sets.newLinkedHashSet();
+    private ExecutableElement element;
 
-    public AutoDataGetterMethod(@Nonnull String name, @Nonnull TypeName returnType) {
-        this.name = checkNotNull(name);
-        this.returnType = checkNotNull(returnType);
+    public AutoDataGetterMethod(@Nonnull ExecutableElement element) {
+        this.element = checkNotNull(element);
+
     }
 
     public String getName() {
-        return name;
+        return element.getSimpleName().toString();
     }
 
-    public TypeName getReturnType() {
-        return returnType;
-    }
-
-    public Set<AnnotationSpec> getAnnotations() {
-        return Collections.unmodifiableSet(annotations);
-    }
-
-    public void addAnnotation(AnnotationSpec annotation) {
-        annotations.add(annotation);
+    public ExecutableElement getElement() {
+        return element;
     }
 
     @Override
@@ -47,19 +31,16 @@ public final class AutoDataGetterMethod {
 
         AutoDataGetterMethod that = (AutoDataGetterMethod) o;
 
-        if (!name.equals(that.name)) return false;
-        return returnType.equals(that.returnType);
+        return getName().equals(that.getName());
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + returnType.hashCode();
-        return result;
+        return getName().hashCode();
     }
 
     @Override
     public String toString() {
-        return name;
+        return getName();
     }
 }

@@ -1,13 +1,11 @@
 package me.tatarka.autodata.compiler.model;
 
-import com.google.common.collect.Sets;
-import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.TypeName;
-
-import java.util.Collections;
-import java.util.Set;
-
 import javax.annotation.Nonnull;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
+import javax.lang.model.type.TypeMirror;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -16,34 +14,39 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class AutoDataField {
     private String name;
-    private TypeName type;
-    private boolean nullable;
-    private Set<AnnotationSpec> annotations = Sets.newLinkedHashSet();
+    private AutoDataGetterMethod getterMethod;
 
-    public AutoDataField(@Nonnull String name, @Nonnull TypeName type, boolean nullable) {
+    private TypeMirror type;
+    private boolean isNullable;
+
+    public AutoDataField(@Nonnull String name, @Nonnull AutoDataGetterMethod getterMethod) {
         this.name = checkNotNull(name);
-        this.type = checkNotNull(type);
-        this.nullable = nullable;
+        this.getterMethod = checkNotNull(getterMethod);
+
+        this.type = getterMethod.getElement().getReturnType();
+        if (!type.getKind().isPrimitive()) { // Can't be nullable if a primitive type.
+            this.isNullable = hasNullableAnnotation(getterMethod.getElement());
+        }
     }
 
     public String getName() {
         return name;
     }
 
-    public TypeName getType() {
+    public TypeMirror getType() {
         return type;
     }
 
+    public AutoDataGetterMethod getGetterMethod() {
+        return getterMethod;
+    }
+
+    public ExecutableElement getGetterElement() {
+        return getterMethod.getElement();
+    }
+
     public boolean isNullable() {
-        return nullable && !type.isPrimitive();
-    }
-
-    public Set<AnnotationSpec> getAnnotations() {
-        return Collections.unmodifiableSet(annotations);
-    }
-
-    public void addAnnotation(AnnotationSpec annotation) {
-        annotations.add(annotation);
+        return isNullable;
     }
 
     @Override
@@ -53,20 +56,26 @@ public final class AutoDataField {
 
         AutoDataField that = (AutoDataField) o;
 
-        if (!name.equals(that.name)) return false;
-        return type.equals(that.type);
-
+        return name.equals(that.name);
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + type.hashCode();
-        return result;
+        return name.hashCode();
     }
 
     @Override
     public String toString() {
         return name;
+    }
+
+    private static boolean hasNullableAnnotation(Element element) {
+        for (AnnotationMirror annotationMirror : element.getAnnotationMirrors()) {
+            Name name = annotationMirror.getAnnotationType().asElement().getSimpleName();
+            if (name.contentEquals("Nullable")) {
+                return true;
+            }
+        }
+        return false;
     }
 }
