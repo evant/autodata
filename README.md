@@ -8,13 +8,13 @@ An extensable alternative to [AutoValue](https://github.com/google/auto/tree/mas
 - Allow mix-and-match usage of features, and write your own code-gen extensions easily.
 
 ## Basic Usage
-You should look at the documentation for [AutoValue](https://github.com/google/auto/tree/master/value) to see how to use it, since the base feature set is the same. Just replace `@com.google.auto.value.AutoValue` with `@me.tatarka.base.AutoData` and `@com.google.auto.value.AutoValue.Builder` with `@me.tatarka.base.AutoData`, (and of course, `AutoValue_<ClassName>` with `AutoData_<ClassName>`).
+You should look at the documentation for [AutoValue](https://github.com/google/auto/tree/master/value) to see how to use it, since the base feature set is the same. Just replace `@com.google.auto.value.AutoValue` with `@me.tatarka.base.AutoData` and `@com.google.auto.value.AutoValue.Builder` with `@me.tatarka.base.AutoData.Builder`, (and of course, `AutoValue_<ClassName>` with `AutoData_<ClassName>`).
 
 ## Applying a plugin
 
-You can apply addional plugins by simply adding more annotations. By default, the plugins `@AutoDataEquals`, `@AutoDataToString`, and `@AutoDataBuilder` are applied. You can disable the defaults by setting `@AutoData(defaults = false)`. Therefore, to simulate the default settings you can do:
+You can apply addional plugins by simply adding more annotations. By default, the plugins `@AutoEquals`, `@AutoToString`, and `@AutoBuilder` are applied. You can disable the defaults by setting `@AutoData(defaults = false)`. Therefore, to simulate the default settings you can do:
 ```java
-@AutoData(defaults=false) @AutoDataEquals @AutoDataToString @AutoDataBuilder
+@AutoData(defaults=false) @AutoEquals @AutoToString @AutoBuilder
 public abstract class MyClass {}
 ```
 
