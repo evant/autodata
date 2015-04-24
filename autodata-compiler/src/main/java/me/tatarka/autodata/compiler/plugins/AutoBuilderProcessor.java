@@ -91,7 +91,7 @@ public class AutoBuilderProcessor implements AutoDataProcessor<AutoBuilder> {
             if (fieldType instanceof PrimitiveType) {
                 fieldType = typeUtils.boxedClass((PrimitiveType) fieldType).asType();
             }
-            builder.addField(TypeName.get(fieldType), field.getName());
+            builder.addField(TypeName.get(fieldType), field.getName(), Modifier.PRIVATE);
         }
 
 
@@ -140,6 +140,7 @@ public class AutoBuilderProcessor implements AutoDataProcessor<AutoBuilder> {
             }
 
             methodBuilder.addStatement("return this");
+            builder.addMethod(methodBuilder.build());
         }
 
         // build
@@ -183,7 +184,7 @@ public class AutoBuilderProcessor implements AutoDataProcessor<AutoBuilder> {
                 methodBuilder.addStatement("$T missing = \"\"", String.class);
                 for (AutoDataField field : autoDataClass.getFields()) {
                     if (!field.isNullable()) {
-                        methodBuilder.beginControlFlow("if ($L == null)", field.getName())
+                        methodBuilder.beginControlFlow("if (this.$L == null)", field.getName())
                                 .addStatement("missing += \" $L\"", field.getName())
                                 .endControlFlow();
                     }

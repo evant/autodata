@@ -23,4 +23,14 @@ public class BuilderTest {
                     .and()
                     .generatesSources(JavaFileObjects.forResource("builder/outputs/AutoData_Empty.java"));
     }
+
+    @Test
+    public void field() {
+        ASSERT.about(javaSource())
+                .that(JavaFileObjects.forResource("builder/inputs/Field.java"))
+                .processedWith(new AutoDataAnnotationProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("builder/outputs/AutoData_Field.java"));
+    }
 }
