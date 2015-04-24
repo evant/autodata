@@ -58,6 +58,7 @@ package me.tatarka.autodata.compiler.plugins;
 import com.google.auto.service.AutoService;
 import me.tatarka.autodata.compiler.AutoDataProcessor;
 import me.tatarka.autodata.plugins.AutoEquals;
+import javax.annotation.processing.ProcessingEnvironment;
 
 @AutoService(AutoDataProcessor.class)
 public class AutoEqualsProcessor implements AutoDataProcessor<AutoEquals> {
@@ -65,13 +66,19 @@ public class AutoEqualsProcessor implements AutoDataProcessor<AutoEquals> {
   public Class<AutoEquals> forAnnotation() {
     return AutoEquals.class;
   }
+  
+  @Override
+  public void init(ProcessingEnvironment env) {
+  }
 
   @Override
-  public void process(AutoEquals annotation, final AutoDataClass autoDataClass, TypeSpec.Builder genClassBuilder) {
+  public void process(AutoEquals annotation, final AutoDataClass autoDataClass, AutoDataClassBuilder genClassBuilder) {
     ...
   }
 }
 ```
 You need to provied your annotation that you wrote earlier.
 
-The meat of the implemetation goes in `process`. This takes an `AutoDataClass` that provieds information about the class you are processing, and `TypeSpec.Builder` where you output anything you want to generate. The code geneator uses [JavaPoet](https://github.com/square/javapoet) and you should check out their documentation for how to use that api. It also takes an instance of the annotation you defined. Feel free to declare any annotation arguments if you want to use them to customize your processing.
+The `init()` method gives you the annotation processor's environment. This allows you to report error messages, use the type and element utils, and write your own addiontal classes if you so choose.
+
+The meat of the implemetation goes in `process`. This takes an `AutoDataClass` that provieds information about the class you are processing, and `AutoDataClassBuilder` where you output anything you want to generate. The code geneator uses [JavaPoet](https://github.com/square/javapoet) and you should check out their documentation for how to use that api. It also takes an instance of the annotation you defined. Feel free to declare any annotation arguments if you want to use them to customize your processing.
