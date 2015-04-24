@@ -16,12 +16,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * methods and fields.
  */
 public final class AutoDataClass {
+    private String genClassName;
     private TypeElement element;
     private Set<AutoDataField> fields;
 
-    public AutoDataClass(TypeElement element, @Nonnull Collection<AutoDataField> fields) {
+    public AutoDataClass(String genClassName, TypeElement element, @Nonnull Collection<AutoDataField> fields) {
+        this.genClassName = genClassName;
         this.element = checkNotNull(element);
         this.fields = new LinkedHashSet<>(checkNotNull(fields));
+    }
+
+    public String getGenClassName() {
+        return genClassName;
     }
 
     public TypeElement getElement() {

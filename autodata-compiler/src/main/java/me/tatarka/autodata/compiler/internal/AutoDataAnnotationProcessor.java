@@ -13,9 +13,11 @@ import me.tatarka.autodata.compiler.AutoDataProcessor;
 import me.tatarka.autodata.compiler.model.AutoDataClass;
 import me.tatarka.autodata.compiler.model.AutoDataField;
 import me.tatarka.autodata.compiler.model.AutoDataGetterMethod;
+import me.tatarka.autodata.plugins.AutoBuilder;
 import me.tatarka.autodata.plugins.AutoEquals;
 import me.tatarka.autodata.plugins.AutoToString;
 
+import javax.annotation.Nullable;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
@@ -29,7 +31,7 @@ import javax.tools.JavaFileObject;
 import java.beans.Introspector;
 import java.io.IOException;
 import java.io.Writer;
-import java.lang.annotation.Annotation;
+import java.lang.annotation.*;
 import java.util.*;
 
 /**
@@ -50,7 +52,7 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
     private Set<Element> processedElements = Sets.newHashSet();
 
     private static final List<Class> DEFAULTS = Arrays.asList(new Class[]{
-            AutoEquals.class, AutoToString.class
+            AutoEquals.class, AutoToString.class, AutoBuilder.class
     });
 
     @Override
@@ -100,7 +102,13 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
                         } else {
                             // Is a user-defined annotation, look for it and retrieve it's annotations.
                             AnnotationMirror annotationMirror = element.getAnnotationMirrors().iterator().next();
+
                             Class<Annotation> userAnnotation = getDeclaredAnnotationClass(annotationMirror);
+                            // May not be a valid user annotation after all (example: @AutoData.Builder)
+                            if (userAnnotation == null) {
+                                continue;
+                            }
+
                             autoData = userAnnotation.getAnnotation(AutoData.class);
 
                             if (autoData == null) {
@@ -180,9 +188,8 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
         List<ExecutableElement> declaredMethods = ElementFilter.methodsIn(classElement.getEnclosedElements());
 
 
-        AutoDataClass autoDataClass = new AutoDataClass(classElement, fieldMap.values());
+        AutoDataClass autoDataClass = new AutoDataClass(className, classElement, fieldMap.values());
         AutoDataClassBuilderImpl genClassBuilder = new AutoDataClassBuilderImpl(className, autoDataClass, declaredMethods, messager, typeUtils);
-
 
         Iterable<Annotation> pluginAnnotations;
         if (autoData.defaults()) {
@@ -257,8 +264,24 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
         return Introspector.decapitalize(name);
     }
 
+    @Nullable
     private static Class<Annotation> getDeclaredAnnotationClass(AnnotationMirror mirror) throws ClassNotFoundException {
         TypeElement element = (TypeElement) mirror.getAnnotationType().asElement();
+        // Ensure the annotation has the correct retention and targets.
+        Retention retention = element.getAnnotation(Retention.class);
+        if (retention != null && retention.value() != RetentionPolicy.RUNTIME) {
+            return null;
+        }
+        Target target = element.getAnnotation(Target.class);
+        if (target != null) {
+            if (target.value().length < 2) {
+                return null;
+            }
+            List<ElementType> targets = Arrays.asList(target.value());
+            if (!(targets.contains(ElementType.TYPE) && targets.contains(ElementType.ANNOTATION_TYPE))) {
+                return null;
+            }
+        }
         return (Class<Annotation>) Class.forName(element.getQualifiedName().toString());
     }
 

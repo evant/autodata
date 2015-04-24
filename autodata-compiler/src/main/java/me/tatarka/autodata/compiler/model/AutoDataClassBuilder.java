@@ -26,4 +26,6 @@ public interface AutoDataClassBuilder {
     AutoDataClassBuilder addField(Type type, String name, Modifier... modifiers);
 
     AutoDataClassBuilder addMethod(MethodSpec methodSpec);
+
+    AutoDataClassBuilder addType(TypeSpec typeSpec);
 }

@@ -112,6 +112,12 @@ class AutoDataClassBuilderImpl implements AutoDataClassBuilder {
         return this;
     }
 
+    @Override
+    public AutoDataClassBuilder addType(TypeSpec typeSpec) {
+        builder.addType(typeSpec);
+        return this;
+    }
+
     TypeSpec build() {
         for (MethodSpec spec : addedMethods) {
             builder.addMethod(spec);
