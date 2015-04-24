@@ -22,7 +22,7 @@ However, this may become cumbersome to apply additional annations to all of your
 ```java
 package me.tatarka.autovalue.base.com.example;
 
-@AutoData(defaults=false) @AutoDataEquals @AutoDataToString @AutoDataBuilder
+@AutoData(defaults=false) @AutoEquals @AutoToString @AutoBuilder
 public @interface @Data {}
 ```
 
