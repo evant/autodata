@@ -4,11 +4,11 @@
 An extensable alternative to [AutoValue](https://github.com/google/auto/tree/master/value)
 
 ## Goals
-- Be a drop-in replacement for AutoValue, with all it's features.
+- Be a (mostly) drop-in replacement for AutoValue, with all it's features.
 - Allow mix-and-match usage of features, and write your own code-gen extensions easily.
 
 ## Basic Usage
-You should look at the documentation for [AutoValue](https://github.com/google/auto/tree/master/value) to see how to use it, since the base feature set is the same. Just replace `@com.google.auto.value.AutoValue` with `@me.tatarka.base.AutoData` and `@com.google.auto.value.AutoValue.Builder` with `@me.tatarka.base.AutoData`.
+You should look at the documentation for [AutoValue](https://github.com/google/auto/tree/master/value) to see how to use it, since the base feature set is the same. Just replace `@com.google.auto.value.AutoValue` with `@me.tatarka.base.AutoData` and `@com.google.auto.value.AutoValue.Builder` with `@me.tatarka.base.AutoData`, (and of course, `AutoValue_<ClassName>` with `AutoData_<ClassName>`).
 
 ## Applying a plugin
 
