@@ -35,11 +35,6 @@ public class AutoBuilderProcessor implements AutoDataProcessor<AutoBuilder> {
     private Types typeUtils;
 
     @Override
-    public Class<AutoBuilder> forAnnotation() {
-        return AutoBuilder.class;
-    }
-
-    @Override
     public void init(ProcessingEnvironment env) {
         messager = env.getMessager();
         typeUtils = env.getTypeUtils();

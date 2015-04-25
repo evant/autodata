@@ -3,7 +3,3 @@ apply from: '../maven-publish.gradle'
 
 group = 'me.tatarka.autodata'
 version = '0.1-SNAPSHOT'
-
-dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-}

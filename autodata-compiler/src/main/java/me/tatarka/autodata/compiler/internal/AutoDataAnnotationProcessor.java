@@ -32,6 +32,8 @@ import java.beans.Introspector;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.annotation.*;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -67,7 +69,12 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
         ServiceLoader<AutoDataProcessor> serviceLoader = ServiceLoader.load(AutoDataProcessor.class);
         for (AutoDataProcessor processor : serviceLoader) {
             processor.init(processingEnv);
-            processors.put(processor.forAnnotation().getName(), processor);
+            String annotationName = getAnnotationNameForProcessor(processor);
+            if (annotationName != null) {
+                processors.put(annotationName, processor);
+            } else {
+                messager.printMessage(Diagnostic.Kind.ERROR, "AutoDataProcessor " + processor + " does not provide required annotation generic type parameter.");
+            }
         }
     }
 
@@ -283,6 +290,20 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
             }
         }
         return (Class<Annotation>) Class.forName(element.getQualifiedName().toString());
+    }
+
+    @Nullable
+    private static String getAnnotationNameForProcessor(AutoDataProcessor processor) {
+        for (Type iface : processor.getClass().getGenericInterfaces()) {
+            String name = iface.getTypeName();
+            if (name.startsWith(AutoDataProcessor.class.getName())) {
+                if (iface instanceof ParameterizedType) {
+                    return ((ParameterizedType) iface).getActualTypeArguments()[0].getTypeName();
+                }
+
+            }
+        }
+        return null;
     }
 
     private static String buildClassName(Element classElement) {

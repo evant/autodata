@@ -19,11 +19,6 @@ import java.util.Iterator;
 @AutoService(AutoDataProcessor.class)
 public class AutoEqualsProcessor implements AutoDataProcessor<AutoEquals> {
     @Override
-    public Class<AutoEquals> forAnnotation() {
-        return AutoEquals.class;
-    }
-
-    @Override
     public void init(ProcessingEnvironment env) {
 
     }

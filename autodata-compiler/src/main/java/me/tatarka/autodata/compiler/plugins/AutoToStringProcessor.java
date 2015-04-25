@@ -21,11 +21,6 @@ import java.util.Iterator;
 @AutoService(AutoDataProcessor.class)
 public class AutoToStringProcessor implements AutoDataProcessor<AutoToString> {
     @Override
-    public Class<AutoToString> forAnnotation() {
-        return AutoToString.class;
-    }
-
-    @Override
     public void init(ProcessingEnvironment env) {
 
     }

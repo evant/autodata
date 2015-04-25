@@ -24,11 +24,6 @@ import java.util.List;
 // This one isn't a service since it's hard-coded to always run.
 public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
     @Override
-    public Class<AutoData> forAnnotation() {
-        return AutoData.class;
-    }
-
-    @Override
     public void init(ProcessingEnvironment env) {
 
     }
