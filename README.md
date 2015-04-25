@@ -63,11 +63,6 @@ import javax.annotation.processing.ProcessingEnvironment;
 @AutoService(AutoDataProcessor.class)
 public class AutoEqualsProcessor implements AutoDataProcessor<AutoEquals> {
   @Override
-  public Class<AutoEquals> forAnnotation() {
-    return AutoEquals.class;
-  }
-  
-  @Override
   public void init(ProcessingEnvironment env) {
   }
 
@@ -77,8 +72,13 @@ public class AutoEqualsProcessor implements AutoDataProcessor<AutoEquals> {
   }
 }
 ```
-You need to provied your annotation that you wrote earlier.
+You must provide your annotation to the type argument of the `AutoDataProcessor` interface.
 
 The `init()` method gives you the annotation processor's environment. This allows you to report error messages, use the type and element utils, and write your own addiontal classes if you so choose.
 
 The meat of the implemetation goes in `process`. This takes an `AutoDataClass` that provieds information about the class you are processing, and `AutoDataClassBuilder` where you output anything you want to generate. The code geneator uses [JavaPoet](https://github.com/square/javapoet) and you should check out their documentation for how to use that api. It also takes an instance of the annotation you defined. Feel free to declare any annotation arguments if you want to use them to customize your processing.
+
+## Plugins
+- [AutoDataParcel](https://github.com/evant/autodata-parcel) - Generate Android Parcelable implemention.
+
+Please submit a pull request if you wrote a plugin and want it to be included on this list. Your plugin **must** be avaialble on maven central or jcenter for it to be added.
