@@ -1,4 +1,8 @@
 apply plugin: 'java'
+apply from: '../maven-publish.gradle'
+
+group = 'me.tatarka.autodata'
+version = '0.1-SNAPSHOT'
 
 dependencies {
     compile project(':autodata')
@@ -11,3 +15,5 @@ dependencies {
     testCompile 'com.google.testing.compile:compile-testing:1.0-SNAPSHOT'
     testCompile files("${System.properties['java.home']}/../lib/tools.jar")
 }
+
+

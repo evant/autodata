@@ -47,6 +47,16 @@ public class BaseTest {
     }
 
     @Test
+    public void arrayField() {
+        ASSERT.about(javaSource())
+                .that(JavaFileObjects.forResource("base/inputs/ArrayField.java"))
+                .processedWith(new AutoDataAnnotationProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_ArrayField.java"));
+    }
+
+    @Test
     public void getField() {
         ASSERT.about(javaSource())
                 .that(JavaFileObjects.forResource("base/inputs/GetField.java"))

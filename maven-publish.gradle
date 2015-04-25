@@ -1,0 +1,12 @@
+apply plugin: 'maven-publish'
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+// Because publishToMavenLocal is too damn long
+task install(dependsOn: 'publishToMavenLocal', group: 'publishing')
