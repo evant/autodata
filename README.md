@@ -86,6 +86,11 @@ The `init()` method gives you the annotation processor's environment. This allow
 
 The meat of the implemetation goes in `process`. This takes an `AutoDataClass` that provieds information about the class you are processing, and `AutoDataClassBuilder` where you output anything you want to generate. The code geneator uses [JavaPoet](https://github.com/square/javapoet) and you should check out their documentation for how to use that api. It also takes an instance of the annotation you defined. Feel free to declare any annotation arguments if you want to use them to customize your processing.
 
+### Custom Plugin Tips
+- You don't need to worry about doing any thing special to support underriding, `AutoDataClassBuilder` will take care of it for you.
+- All plugins are playing in the same class. Therefore, if you choose to create any private fields or methods for your own use, you should namespace them to prevent any conflicts with user-defined fields and other plugins.
+- You should use `javax.annotation.processing.Messager` to report any errors instead of throwing an exception. This allows multiple errors to be reported at once and you can pass in an `Element` to point the user right to the location of the problem.
+
 ## Plugins
 - [AutoDataParcel](https://github.com/evant/autodata-parcel) - Generate Android Parcelable implemention.
 
