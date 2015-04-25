@@ -15,7 +15,11 @@ You should look at the documentation for [AutoValue](https://github.com/google/a
 You can apply addional plugins by simply adding more annotations. By default, the plugins `@AutoEquals`, `@AutoToString`, and `@AutoBuilder` are applied. You can disable the defaults by setting `@AutoData(defaults = false)`. Therefore, to simulate the default settings you can do:
 ```java
 @AutoData(defaults=false) @AutoEquals @AutoToString @AutoBuilder
-public abstract class MyClass {}
+public abstract class MyClass {
+  public static MyClass create() {
+    return new AutoData_MyClass();
+  }
+}
 ```
 
 However, this may become cumbersome to apply additional annations to all of your classes. Instead, and actually prefered, you can create your own annotation on which you can apply the plugins to. This annotation **must** be in the package `me.tatarka.autovalue.base` (or a subpackage of that) and **must** be annotated with at least `@AutoData`.
@@ -29,7 +33,11 @@ public @interface @Data {}
 You can now simply apply that annotation on your classes instead.
 ```java
 @Data
-public abstract class MyClass {}
+public abstract class MyClass {
+  public static MyClass create() {
+    return new AutoData_MyClass();
+  }
+}
 ```
 
 ## Writing your own plugin
