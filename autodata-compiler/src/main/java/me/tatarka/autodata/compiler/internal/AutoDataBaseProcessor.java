@@ -1,9 +1,6 @@
 package me.tatarka.autodata.compiler.internal;
 
-import com.squareup.javapoet.FieldSpec;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeVariableName;
+import com.squareup.javapoet.*;
 import me.tatarka.autodata.base.AutoData;
 import me.tatarka.autodata.compiler.AutoDataProcessor;
 import me.tatarka.autodata.compiler.model.AutoDataClass;
@@ -98,7 +95,12 @@ public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
 //            for (AnnotationSpec annotation : method.getAnnotations()) {
 //                builder.addAnnotation(annotation);
 //            }
-            builder.addStatement("return $L", field.getName());
+
+            if (TypeName.get(field.getType()) instanceof ArrayTypeName) {
+                builder.addStatement("return $L.clone()", field.getName());
+            } else {
+                builder.addStatement("return $L", field.getName());
+            }
             genClassBuilder.builder.addMethod(builder.build());
         }
 

@@ -33,4 +33,14 @@ public class BuilderTest {
                 .and()
                 .generatesSources(JavaFileObjects.forResource("builder/outputs/AutoData_Field.java"));
     }
+
+    @Test
+    public void arrayField() {
+        ASSERT.about(javaSource())
+                .that(JavaFileObjects.forResource("builder/inputs/ArrayField.java"))
+                .processedWith(new AutoDataAnnotationProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("builder/outputs/AutoData_ArrayField.java"));
+    }
 }

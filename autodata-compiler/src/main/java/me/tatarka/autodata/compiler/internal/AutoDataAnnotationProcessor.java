@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
+import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
@@ -160,6 +161,7 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
             if (element.getKind() != ElementKind.METHOD || !element.getModifiers().contains(Modifier.ABSTRACT) && !element.getModifiers().contains(Modifier.PRIVATE)) {
                 continue;
             }
+
             ExecutableElement methodElement = (ExecutableElement) element;
             if (!methodElement.getParameters().isEmpty()) {
                 messager.printMessage(Diagnostic.Kind.ERROR, "Abstract method " + methodElement.getSimpleName() + " in class " + classElement.getQualifiedName() + " must not take any arguments.", methodElement);
@@ -169,6 +171,11 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
             TypeMirror returnType = methodElement.getReturnType();
             if (returnType.getKind() == TypeKind.VOID) {
                 messager.printMessage(Diagnostic.Kind.ERROR, "Abstract method " + methodElement.getSimpleName() + " in class " + classElement.getQualifiedName() + " must have a non-void return type.", methodElement);
+                wasError = true;
+            }
+
+            if (returnType instanceof ArrayType && !((ArrayType) returnType).getComponentType().getKind().isPrimitive()) {
+                messager.printMessage(Diagnostic.Kind.ERROR, "Method " + methodElement.getSimpleName() + " cannot return a non-primitive array in class " + classElement.getQualifiedName() + ".", methodElement);
                 wasError = true;
             }
 

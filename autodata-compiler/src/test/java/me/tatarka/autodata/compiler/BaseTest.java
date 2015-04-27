@@ -132,4 +132,13 @@ public class BaseTest {
                 .failsToCompile()
                 .withErrorContaining("More than one AutoData field called test in class ErrorMultipleGets (getTest and test).");
     }
+
+    @Test
+    public void objectArrayField() {
+        ASSERT.about(javaSource())
+                .that(JavaFileObjects.forResource("base/inputs/ErrorObjectArrayField.java"))
+                .processedWith(new AutoDataAnnotationProcessor())
+                .failsToCompile()
+                .withErrorContaining("Method test cannot return a non-primitive array in class ErrorObjectArrayField.");
+    }
 }
