@@ -157,36 +157,39 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
         Map<String, AutoDataField> fieldMap = Maps.newLinkedHashMap();
 
         boolean wasError = false; // Set this so we can show as many errors as we can before bailing out.
-        for (Element element : classElement.getEnclosedElements()) {
-            if (element.getKind() != ElementKind.METHOD || !element.getModifiers().contains(Modifier.ABSTRACT) && !element.getModifiers().contains(Modifier.PRIVATE)) {
+
+        List<ExecutableElement> methods = ElementFilter.methodsIn(classElement.getEnclosedElements());
+        boolean allGetters = allGetters(methods);
+
+        for (ExecutableElement element : methods) {
+            if (!element.getModifiers().contains(Modifier.ABSTRACT) && !element.getModifiers().contains(Modifier.PRIVATE)) {
                 continue;
             }
 
-            ExecutableElement methodElement = (ExecutableElement) element;
-            if (!methodElement.getParameters().isEmpty()) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "Abstract method " + methodElement.getSimpleName() + " in class " + classElement.getQualifiedName() + " must not take any arguments.", methodElement);
+            if (!element.getParameters().isEmpty()) {
+                messager.printMessage(Diagnostic.Kind.ERROR, "Abstract method " + element.getSimpleName() + " in class " + classElement.getQualifiedName() + " must not take any arguments.", element);
                 wasError = true;
             }
 
-            TypeMirror returnType = methodElement.getReturnType();
+            TypeMirror returnType = element.getReturnType();
             if (returnType.getKind() == TypeKind.VOID) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "Abstract method " + methodElement.getSimpleName() + " in class " + classElement.getQualifiedName() + " must have a non-void return type.", methodElement);
+                messager.printMessage(Diagnostic.Kind.ERROR, "Abstract method " + element.getSimpleName() + " in class " + classElement.getQualifiedName() + " must have a non-void return type.", element);
                 wasError = true;
             }
 
             if (returnType instanceof ArrayType && !((ArrayType) returnType).getComponentType().getKind().isPrimitive()) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "Method " + methodElement.getSimpleName() + " cannot return a non-primitive array in class " + classElement.getQualifiedName() + ".", methodElement);
+                messager.printMessage(Diagnostic.Kind.ERROR, "Method " + element.getSimpleName() + " cannot return a non-primitive array in class " + classElement.getQualifiedName() + ".", element);
                 wasError = true;
             }
 
             String methodName = element.getSimpleName().toString();
-            String fieldName = nameWithoutPrefix(methodName);
-            AutoDataGetterMethod method = new AutoDataGetterMethod(methodElement);
+            String fieldName = allGetters ? nameWithoutPrefix(methodName) : methodName;
+            AutoDataGetterMethod method = new AutoDataGetterMethod(element);
             AutoDataField field = new AutoDataField(fieldName, method);
 
             AutoDataField previousField;
             if ((previousField = fieldMap.get(field.getName())) != null) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "More than one AutoData field called " + fieldName + " in class " + classElement.getQualifiedName() + " (" + methodName + " and " + previousField.getGetterMethod().getName() + ").", methodElement);
+                messager.printMessage(Diagnostic.Kind.ERROR, "More than one AutoData field called " + fieldName + " in class " + classElement.getQualifiedName() + " (" + methodName + " and " + previousField.getGetterMethod().getName() + ").", element);
                 wasError = true;
             }
 
@@ -267,6 +270,19 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
                 return !DEFAULTS.contains(input.getClass());
             }
         });
+    }
+
+    private static boolean allGetters(Iterable<ExecutableElement> methods) {
+        for (ExecutableElement method : methods) {
+            String name = method.getSimpleName().toString();
+            boolean get = name.startsWith("get") && !name.equals("get");
+            boolean is = name.startsWith("is") && !name.equals("is")
+                    && method.getReturnType().getKind() == TypeKind.BOOLEAN;
+            if (!get && !is) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static String nameWithoutPrefix(String name) {

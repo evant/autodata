@@ -67,6 +67,16 @@ public class BaseTest {
     }
 
     @Test
+    public void oneGetField() {
+        ASSERT.about(javaSource())
+                .that(JavaFileObjects.forResource("base/inputs/OneGetField.java"))
+                .processedWith(new AutoDataAnnotationProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_OneGetField.java"));
+    }
+
+    @Test
     public void protectedField() {
         ASSERT.about(javaSource())
                 .that(JavaFileObjects.forResource("base/inputs/ProtectedField.java"))
@@ -130,7 +140,7 @@ public class BaseTest {
                 .that(JavaFileObjects.forResource("base/inputs/ErrorMultipleGets.java"))
                 .processedWith(new AutoDataAnnotationProcessor())
                 .failsToCompile()
-                .withErrorContaining("More than one AutoData field called test in class ErrorMultipleGets (getTest and test).");
+                .withErrorContaining("More than one AutoData field called test in class ErrorMultipleGets (getTest and isTest).");
     }
 
     @Test
