@@ -1,12 +1,15 @@
 package me.tatarka.autodata.compiler;
 
 import com.google.testing.compile.JavaFileObjects;
-
+import me.tatarka.autodata.compiler.internal.AutoDataAnnotationProcessor;
+import me.tatarka.autodata.util.AutoDataParameterizedTest;
+import me.tatarka.autodata.util.AutoDataParams;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
 
-import me.tatarka.autodata.compiler.internal.AutoDataAnnotationProcessor;
+import java.util.Collection;
 
 import static com.google.common.truth.Truth.ASSERT;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
@@ -16,94 +19,22 @@ import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
  */
 @RunWith(JUnit4.class)
 public class BaseTest {
-    @Test
-    public void empty() {
-        ASSERT.about(javaSource())
-                .that(JavaFileObjects.forResource("base/inputs/Empty.java"))
-                .processedWith(new AutoDataAnnotationProcessor())
-                .compilesWithoutError()
-                .and()
-                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_Empty.java"));
-    }
-
-    @Test
-    public void primitiveField() {
-        ASSERT.about(javaSource())
-                .that(JavaFileObjects.forResource("base/inputs/PrimitiveField.java"))
-                .processedWith(new AutoDataAnnotationProcessor())
-                .compilesWithoutError()
-                .and()
-                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_PrimitiveField.java"));
-    }
-
-    @Test
-    public void objectField() {
-        ASSERT.about(javaSource())
-                .that(JavaFileObjects.forResource("base/inputs/ObjectField.java"))
-                .processedWith(new AutoDataAnnotationProcessor())
-                .compilesWithoutError()
-                .and()
-                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_ObjectField.java"));
-    }
-
-    @Test
-    public void arrayField() {
-        ASSERT.about(javaSource())
-                .that(JavaFileObjects.forResource("base/inputs/ArrayField.java"))
-                .processedWith(new AutoDataAnnotationProcessor())
-                .compilesWithoutError()
-                .and()
-                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_ArrayField.java"));
-    }
-
-    @Test
-    public void getField() {
-        ASSERT.about(javaSource())
-                .that(JavaFileObjects.forResource("base/inputs/GetField.java"))
-                .processedWith(new AutoDataAnnotationProcessor())
-                .compilesWithoutError()
-                .and()
-                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_GetField.java"));
-    }
-
-    @Test
-    public void oneGetField() {
-        ASSERT.about(javaSource())
-                .that(JavaFileObjects.forResource("base/inputs/OneGetField.java"))
-                .processedWith(new AutoDataAnnotationProcessor())
-                .compilesWithoutError()
-                .and()
-                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_OneGetField.java"));
-    }
-
-    @Test
-    public void protectedField() {
-        ASSERT.about(javaSource())
-                .that(JavaFileObjects.forResource("base/inputs/ProtectedField.java"))
-                .processedWith(new AutoDataAnnotationProcessor())
-                .compilesWithoutError()
-                .and()
-                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_ProtectedField.java"));
-    }
-
-    @Test
-    public void genericField() {
-        ASSERT.about(javaSource())
-                .that(JavaFileObjects.forResource("base/inputs/GenericField.java"))
-                .processedWith(new AutoDataAnnotationProcessor())
-                .compilesWithoutError()
-                .and()
-                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_GenericField.java"));
-    }
-
-    @Test
-    public void complexGenerics() {
-        ASSERT.about(javaSource())
-                .that(JavaFileObjects.forResource("base/inputs/ComplexGenerics.java"))
-                .processedWith(new AutoDataAnnotationProcessor())
-                .compilesWithoutError()
-                .and()
-                .generatesSources(JavaFileObjects.forResource("base/outputs/AutoData_ComplexGenerics.java"));
+    @RunWith(Parameterized.class)
+    public static class BaseParameterized extends AutoDataParameterizedTest {
+        @Parameterized.Parameters
+        public static Collection<String[]> testData() {
+            return AutoDataParams.of("base").with(
+                    "Empty",
+                    "PrimitiveField",
+                    "ObjectField",
+                    "ArrayField",
+                    "GetField",
+                    "OneGetField",
+                    "ProtectedField",
+                    "GenericField",
+                    "ComplexGenerics"
+            );
+        }
     }
 
     @Test

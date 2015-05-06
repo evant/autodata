@@ -1,48 +1,25 @@
 package me.tatarka.autodata.compiler;
 
-import com.google.testing.compile.JavaFileObjects;
-
-import org.junit.Test;
+import me.tatarka.autodata.util.AutoDataParameterizedTest;
+import me.tatarka.autodata.util.AutoDataParams;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
 
-import me.tatarka.autodata.compiler.internal.AutoDataAnnotationProcessor;
-
-import static com.google.common.truth.Truth.ASSERT;
-import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
+import java.util.Collection;
 
 /**
  * Created by evan on 4/20/15.
  */
-@RunWith(JUnit4.class)
 public class EqualsTest {
-    @Test
-    public void empty() {
-            ASSERT.about(javaSource())
-                    .that(JavaFileObjects.forResource("equals/inputs/Empty.java"))
-                    .processedWith(new AutoDataAnnotationProcessor())
-                    .compilesWithoutError()
-                    .and()
-                    .generatesSources(JavaFileObjects.forResource("equals/outputs/AutoData_Empty.java"));
-    }
-
-    @Test
-    public void booleanField() {
-            ASSERT.about(javaSource())
-                    .that(JavaFileObjects.forResource("equals/inputs/BooleanField.java"))
-                    .processedWith(new AutoDataAnnotationProcessor())
-                    .compilesWithoutError()
-                    .and()
-                    .generatesSources(JavaFileObjects.forResource("equals/outputs/AutoData_BooleanField.java"));
-    }
-
-    @Test
-    public void underride() {
-        ASSERT.about(javaSource())
-                .that(JavaFileObjects.forResource("equals/inputs/Underride.java"))
-                .processedWith(new AutoDataAnnotationProcessor())
-                .compilesWithoutError()
-                .and()
-                .generatesSources(JavaFileObjects.forResource("equals/outputs/AutoData_Underride.java"));
+    @RunWith(Parameterized.class)
+    public static class EqualsParamterized extends AutoDataParameterizedTest {
+        @Parameterized.Parameters
+        public static Collection<String[]> testData() {
+            return AutoDataParams.of("equals").with(
+                    "Empty",
+                    "BooleanField",
+                    "Underride"
+            );
+        }
     }
 }
