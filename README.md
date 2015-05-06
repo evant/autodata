@@ -1,5 +1,3 @@
-**Warning!** This is a work in progress, not everything described below is complete.
-
 # AutoData
 An extensable alternative to [AutoValue](https://github.com/google/auto/tree/master/value)
 
