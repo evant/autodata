@@ -8,10 +8,21 @@ import me.tatarka.autodata.compiler.model.AutoDataClassBuilder;
 import me.tatarka.autodata.compiler.model.AutoDataField;
 import me.tatarka.autodata.compiler.model.AutoDataGetterMethod;
 
+import javax.annotation.Nullable;
+import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
+import javax.tools.Diagnostic;
+import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -20,9 +31,15 @@ import java.util.List;
  */
 // This one isn't a service since it's hard-coded to always run.
 public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
+    private Elements elementUtils;
+    private Types typeUtils;
+    private Messager messager;
+
     @Override
     public void init(ProcessingEnvironment env) {
-
+        elementUtils = env.getElementUtils();
+        typeUtils = env.getTypeUtils();
+        messager = env.getMessager();
     }
 
     @Override
@@ -41,6 +58,14 @@ public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
                 boundNames[i] = TypeName.get(bounds.get(i));
             }
             genClassBuilder.builder.addTypeVariable(TypeVariableName.get(typeElement.getSimpleName().toString(), boundNames));
+        }
+
+        // SerialVersionUID
+        String serialVersionUID = getSerialVersionUID(autoDataClass.getElement());
+        if (serialVersionUID != null) {
+            genClassBuilder.addField(FieldSpec.builder(TypeName.LONG, "serialVersionUID", Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+                    .initializer(serialVersionUID)
+                    .build());
         }
 
         Collection<AutoDataField> fields = autoDataClass.getFields();
@@ -103,6 +128,32 @@ public class AutoDataBaseProcessor implements AutoDataProcessor<AutoData> {
             }
             genClassBuilder.builder.addMethod(builder.build());
         }
+    }
 
+    /**
+     * Return a string like "1234L" if type instanceof Serializable and defines serialVersionUID =
+     * 1234L, otherwise null.
+     */
+    @Nullable
+    private String getSerialVersionUID(TypeElement type) {
+        TypeMirror serializable = elementUtils.getTypeElement(Serializable.class.getName()).asType();
+        if (typeUtils.isAssignable(type.asType(), serializable)) {
+            List<VariableElement> fields = ElementFilter.fieldsIn(type.getEnclosedElements());
+            for (VariableElement field : fields) {
+                if (field.getSimpleName().toString().equals("serialVersionUID")) {
+                    Object value = field.getConstantValue();
+                    if (field.getModifiers().containsAll(Arrays.asList(Modifier.STATIC, Modifier.FINAL))
+                            && field.asType().getKind() == TypeKind.LONG
+                            && value != null) {
+                        return value + "L";
+                    } else {
+                        messager.printMessage(Diagnostic.Kind.ERROR,
+                                "serialVersionUID must be a static final long compile-time constant", field);
+                        break;
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

@@ -32,7 +32,8 @@ public class BaseTest {
                     "OneGetField",
                     "ProtectedField",
                     "GenericField",
-                    "ComplexGenerics"
+                    "ComplexGenerics",
+                    "Serialize"
             );
         }
     }

@@ -127,8 +127,8 @@ class AutoDataClassBuilderImpl implements AutoDataClassBuilder {
     }
 
     /**
-     * Determine if a declared method matches one that has been added. This allows underriding by silently dropping
-     * methods which have already been declared.
+     * Determine if a declared method matches one that has been added. This allows underriding by
+     * silently dropping methods which have already been declared.
      */
     private boolean specMatches(MethodSpec spec, ExecutableElement element) {
         if (!spec.name.equals(element.getSimpleName().toString())) {
