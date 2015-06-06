@@ -1,10 +1,11 @@
 package me.tatarka.autodata.compiler;
 
-import me.tatarka.autodata.compiler.model.AutoDataClass;
-import me.tatarka.autodata.compiler.model.AutoDataClassBuilder;
+import java.lang.annotation.Annotation;
 
 import javax.annotation.processing.ProcessingEnvironment;
-import java.lang.annotation.Annotation;
+
+import me.tatarka.autodata.compiler.model.AutoDataClass;
+import me.tatarka.autodata.compiler.model.AutoDataClassBuilder;
 
 /**
  * Created by evan on 4/20/15.

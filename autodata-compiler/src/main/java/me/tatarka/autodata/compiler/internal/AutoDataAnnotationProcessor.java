@@ -8,6 +8,47 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.squareup.javapoet.JavaFile;
+
+import java.beans.Introspector;
+import java.io.IOException;
+import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Nullable;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.Messager;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
+
 import me.tatarka.autodata.base.AutoData;
 import me.tatarka.autodata.compiler.AutoDataProcessor;
 import me.tatarka.autodata.compiler.model.AutoDataClass;
@@ -17,32 +58,12 @@ import me.tatarka.autodata.plugins.AutoBuilder;
 import me.tatarka.autodata.plugins.AutoEquals;
 import me.tatarka.autodata.plugins.AutoToString;
 
-import javax.annotation.Nullable;
-import javax.annotation.processing.*;
-import javax.lang.model.SourceVersion;
-import javax.lang.model.element.*;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
-import java.beans.Introspector;
-import java.io.IOException;
-import java.io.Writer;
-import java.lang.annotation.*;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.*;
-
 /**
  * Created by evan on 4/20/15.
  */
 // Use a wildcard to allow user-defined AutoData annotations by putting them in the same package.
 @SupportedAnnotationTypes("me.tatarka.autodata.base.*")
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class AutoDataAnnotationProcessor extends AbstractProcessor {
     private static final String PREFIX = "AutoData_";
 
@@ -67,8 +88,30 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
         typeUtils = processingEnv.getTypeUtils();
 
         baseProcessor.init(processingEnv);
-        ServiceLoader<AutoDataProcessor> serviceLoader = ServiceLoader.load(AutoDataProcessor.class);
-        for (AutoDataProcessor processor : serviceLoader) {
+
+        ResourceFinder resourceFinder = new ResourceFinder("META-INF/services/", getClass().getClassLoader());
+        List<Class<? extends AutoDataProcessor>> processorClasses;
+
+        try {
+            processorClasses = resourceFinder.findAllImplementations(AutoDataProcessor.class);
+        } catch (IOException | ClassNotFoundException e) {
+            messager.printMessage(Diagnostic.Kind.ERROR, e.getMessage());
+            return;
+        }
+
+        if (processorClasses.isEmpty()) {
+            messager.printMessage(Diagnostic.Kind.WARNING, "Did not find any AutoDataProcessors");
+            return;
+        }
+
+        for (Class<? extends AutoDataProcessor> processorClass : processorClasses) {
+            AutoDataProcessor processor;
+            try {
+                processor = processorClass.newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                messager.printMessage(Diagnostic.Kind.ERROR, e.getMessage());
+                continue;
+            }
             processor.init(processingEnv);
             String annotationName = getAnnotationNameForProcessor(processor);
             if (annotationName != null) {
@@ -213,7 +256,12 @@ public class AutoDataAnnotationProcessor extends AbstractProcessor {
             for (Class<?> annotation : DEFAULTS) {
                 String name = getAnnotationName(annotation);
                 genClassBuilder.setCurrentPluginName(name);
-                processors.get(name).process(null, autoDataClass, genClassBuilder);
+                AutoDataProcessor processor = processors.get(name);
+                if (processor != null) {
+                    processor.process(null, autoDataClass, genClassBuilder);
+                } else {
+                    messager.printMessage(Diagnostic.Kind.ERROR, "Missing AutoDataProcessor for annotation " + annotation + ".");
+                }
             }
             pluginAnnotations = removeDefaults(processAnnotations);
         } else {

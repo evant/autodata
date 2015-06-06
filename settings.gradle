@@ -1,1 +1,1 @@
-include ':autodata', ':autodata-compiler'
+include ':autodata', ':autodata-compiler', ':sample'

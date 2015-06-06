@@ -1,8 +1,9 @@
 apply plugin: 'java'
 apply from: '../maven-publish.gradle'
+sourceCompatibility = '1.7'
 
 group = 'me.tatarka.autodata'
-version = '0.1-SNAPSHOT'
+version = '0.1'
 
 dependencies {
     compile project(':autodata')

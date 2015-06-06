@@ -1,0 +1,22 @@
+apply plugin: 'java'
+sourceCompatibility = '1.7'
+
+configurations {
+    provided
+}
+
+sourceSets {
+    main {
+        compileClasspath += configurations.provided
+    }
+}
+
+repositories {
+    mavenLocal()
+} 
+
+dependencies {
+    compile 'me.tatarka.autodata:autodata:0.1'
+    provided 'me.tatarka.autodata:autodata-compiler:0.1'
+}
+
